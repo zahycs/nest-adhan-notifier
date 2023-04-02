@@ -9,7 +9,7 @@ private:
   HTTPClient httpClient;
   const int num_prayers = 5;
 
-  struct tm *get_local_prayer_times(String json)
+  struct tm *getLocalPrayerTimes(String json)
   {
     DynamicJsonDocument doc(1024);
     deserializeJson(doc, json);
@@ -72,6 +72,6 @@ public:
     httpClient.end();
     Serial.println(response);
     // Return the response
-    return get_local_prayer_times(response);
+    return getLocalPrayerTimes(response);
   }
 };
