@@ -15,6 +15,13 @@ const char *password = "your password";
 
 Replace Your SSID and your password with the SSID and password of your WiFi network.
 
+### Speaker name
+
+```cpp
+const char displayName[] = "Family room speaker";
+```
+update your Google nest speaker display name as shown above. 
+
 ### Aladhan API endpoint and parameters
 
 ```cpp
@@ -61,6 +68,5 @@ Once you have configured the sketch with your WiFi credentials, API endpoint and
 This sketch uses the following libraries:
 
 * ArduinoJson
-* WiFi
 * HTTPClient
 * ESP8266-Google-Home-Notifier
