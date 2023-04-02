@@ -20,7 +20,8 @@ public:
     // Notify the name of the prayer
     String notification = "It's time for " + String(prayerNames[prayer]) + " prayer";
     sendNotification(notification.c_str());
-
+    // give a chance to the announcement to play
+       delay(3*1000);
     // Play the MP3
     if (ghn.play(mp3Url) != true) {
       Serial.println(ghn.getLastError());
