@@ -63,7 +63,7 @@ public:
     Serial.print(ghn.getPort());
     Serial.println(")");
 
-    if (ghn.notify(("Adhan's online")) != true)
+    if (ghn.notify(("Adhan is connected")) != true)
     {
       Serial.println(ghn.getLastError());
       return;

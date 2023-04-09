@@ -6,12 +6,11 @@
 #include "AdhanPlayer.cpp"
 #include "PrayerApiClient.cpp"
 #include <time.h>
-
 // WiFi credentials
 const char *ssid = "Your SSID";
 const char *password = "your password";
 
-//Aladhan API endpoint and parameters
+// Aladhan API endpoint and parameters
 const char *api_endpoint = "https://api.aladhan.com/v1/timingsByCity";
 const char *city = "Utrecht";
 const char *country = "NL";
@@ -19,7 +18,7 @@ const int method = 5; // for egyptian general authority of survey
 
 // constants and variables
 const int NUM_PRAYERS = 5;
-const char displayName[] = "Family room speaker";
+const char speakerDisplayName[] = "Family room speaker";
 unsigned long lastApiCallMillis = 0;
 struct tm *prayer_times = new tm[NUM_PRAYERS];
 
@@ -50,14 +49,13 @@ void setup()
   setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
   tzset();
 
-  adhanPlayer.connect(displayName);
+  adhanPlayer.connect(speakerDisplayName);
 
   Serial.println("calling the API ...");
-  setPrayertimes(city, country);
-  //
+  setPrayerTimes(city, country);
 }
 
-void setPrayertimes(String city, String country)
+void setPrayerTimes(String city, String country)
 {
   // Call the API and parse the JSON response
   struct tm *response = prayerClient.getPrayerTimes(city, country, method);
@@ -100,11 +98,19 @@ void loop()
   // Call the API once a day
   if (now_hour == 1 && now_min == 1)
   {
-    // Set prayer times by calling the API
-    setPrayertimes(city, country);
-    // Wait for a minute before running again
-    delay(60 * 1000);
-    Serial.println("Prayer times have been updated for today");
+    try
+    {
+      // Set prayer times by calling the API
+      setPrayerTimes(city, country);
+      Serial.println("Prayer times have been updated for today");
+      adhanPlayer.sendNotification("Prayer times have been successfuly updated for today");
+      // Wait for a minute before running again
+      delay(60 * 1000);
+    }
+    catch (const std::exception &e)
+    {
+      Serial.println(" Error setting prayer times, " + String(e.what()));
+    }
   }
 
   // Check if it's time for the next prayer and play the MP3
@@ -112,9 +118,16 @@ void loop()
   {
     if (now_hour == prayer_times[i].tm_hour && now_min == prayer_times[i].tm_min)
     {
-      adhanPlayer.playAdhan(i);
-      // Wait for a minute before running again
-      delay(60 * 1000);
+      try
+      {
+        adhanPlayer.playAdhan(i);
+        // Wait for a minute before running again
+        delay(60 * 1000);
+      }
+      catch (const std::exception &e)
+      {
+        Serial.println(" error playing adhan, " + String(e.what()));
+      }
     }
   }
 
