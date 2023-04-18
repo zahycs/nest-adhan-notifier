@@ -2,6 +2,7 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <ArduinoJson.hpp>
+#include "models.h"
 
 class PrayerApiClient
 {
@@ -31,13 +32,8 @@ private:
 
     return prayer_times;
   }
-
-public:
-  struct tm *getPrayerTimes(String city, String country, int method)
+  String getRequest(String url)
   {
-    String url = "https://api.aladhan.com/v1/timingsByCity?city=" + city + "&country=" + country + "&method=" + String(method);
-    Serial.println("endpoint: " + String(url));
-
     // Set the headers
     httpClient.addHeader("Host", "api.aladhan.com");
     httpClient.addHeader("Accept", "application/json");
@@ -45,7 +41,6 @@ public:
     httpClient.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
     int retryCount = 0;
 
-    // Try 3 times to get the response, as this api is sometimes glitchy
     while (retryCount < 3)
     {
       retryCount++;
@@ -54,24 +49,84 @@ public:
       int statusCode = httpClient.GET();
 
       // Check the response status code
-      if (statusCode != HTTP_CODE_OK)
+      if (statusCode == HTTP_CODE_OK)
       {
-        Serial.println("Request failed , statusCode:" + String(statusCode));
-        return nullptr;
+        // Get the response body
+        String response = httpClient.getString();
+
+        // Close the connection
+        httpClient.end();
+
+        return response;
       }
       else
       {
-        break;
+        Serial.println("Request failed, statusCode: " + String(statusCode));
       }
     }
 
-    // Get the response body
-    String response = httpClient.getString();
-
     // Close the connection
     httpClient.end();
-    Serial.println(response);
-    // Return the response
+    return "";
+  }
+
+public:
+  struct tm *getPrayerTimes(String city, String country, int method)
+  {
+    String url = "https://api.aladhan.com/v1/timingsByCity?city=" + city + "&country=" + country + "&method=" + String(method);
+    Serial.println("endpoint: " + String(url));
+
+    String response = getRequest(url);
+    if (response.isEmpty())
+    {
+      return nullptr;
+    }
+
     return getLocalPrayerTimes(response);
+  }
+
+  MethodList *getMethods()
+  {
+    Serial.println("Getting calculation methods...");
+    String url = "http://api.aladhan.com/v1/methods";
+    String response = getRequest(url);
+    if (response.isEmpty())
+    {
+      Serial.println("Failed to get the methods");
+      return nullptr;
+    }
+    else
+    {
+      Serial.println(response);
+    }
+
+    // map the response to a struct
+    DynamicJsonDocument doc(2048);
+    deserializeJson(doc, response);
+
+    JsonObject data = doc["data"];
+    int num_responses = data.size(); // Get the number of responses in the data object
+    Method *methods = new Method[num_responses];
+    int i = 0;
+    Serial.println("Number of methods: " + String(num_responses));
+
+    for (ArduinoJson::V6212PB::JsonObject::iterator it = data.begin(); it != data.end(); ++it)
+    {
+      String key = it->key().c_str();
+      Serial.println("Method: " + key);
+      JsonObject methodJson = it->value();
+      int id = methodJson["id"].as<int>();
+      String name = methodJson["name"].as<String>();
+      
+      methods[i].id = id;
+      methods[i].display_name = name;
+      Serial.println("Method: " + String(id) + " " + name); 
+      i++;
+    }
+    // Return the array of method struct
+    MethodList *methodList = new MethodList();
+    methodList->methods = methods;
+    methodList->num_methods = num_responses;
+    return methodList;
   }
 };

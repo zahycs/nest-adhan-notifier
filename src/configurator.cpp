@@ -2,17 +2,22 @@
 #include <WebServer.h>
 #include <EEPROM.h>
 #include <ESPmDNS.h>
-#define EEPROM_MARKER 0xAA
+#include <time.h>
+#include <iostream>
+#include <sstream>
+#include "models.h"
+
 #define EEPROM_SIZE 1024
 
 struct Config
 {
+    String key;
     char ssid[32];
     char password[32];
     char city[32];
     char country[32];
     int method;
-    char api_endpoint[64];
+    // char api_endpoint[64];
     char speakerDisplayName[32];
     char adhan_urls[5][64];
 };
@@ -24,7 +29,10 @@ private:
     WebServer server;
     const char ap_ssid[32] = "ESP32-Configurator";
     const char *host_name = "adhan";
-    
+    const String flash_key = "flash";
+    tm *prayers;
+    // array of methods struct
+    MethodList *methods_list;
 
 public:
     void begin()
@@ -35,7 +43,7 @@ public:
         loadConfig();
 
         // check if ssid and password are set, if not, start SoftAP
-        if (!config.ssid[0] || !config.password[0])
+        if (config.key != flash_key)
         {
             startSoftAP();
         }
@@ -66,6 +74,18 @@ public:
     Config getConfig()
     {
         return config;
+    }
+    void setPrayerTimes(tm *prayers)
+    {
+        this->prayers = prayers;
+    }
+    void setMethodsList(MethodList *methods_list)
+    {
+        this->methods_list = methods_list;
+    }
+    bool isConfigSet()
+    {
+        return config.key == flash_key;
     }
 
 private:
@@ -98,13 +118,10 @@ private:
 
         server.begin();
 
-        if (WiFi.status() == WL_CONNECTED)
-        {
-            Serial.println("Web server started");
-            Serial.print("Access it at http://");
-            Serial.print(host_name);
-            Serial.println(".local/index.html");
-        }
+        Serial.println("Web server started");
+        Serial.print("Access it at http://");
+        Serial.print(host_name);
+        Serial.println(".local/index.html");
     }
 
     void initMDNS()
@@ -122,61 +139,49 @@ private:
     {
         EEPROM.get(0, config);
         Serial.println("config loaded..");
-        printConfig(config);
         EEPROM.end();
 
-        // initialize with default values if not set
-         char *default_mp3Urls[] = {
-        "https://download.tvquran.com/download/selections/380/6088017b417a3.mp3",
-        "https://www.islamcan.com/audio/adhan/azan2.mp3",
-        "https://www.islamcan.com/audio/adhan/azan20.mp3",
-        "https://www.islamcan.com/audio/adhan/azan16.mp3",
-        "https://www.islamcan.com/audio/adhan/azan14.mp3"};
+        if (!isConfigSet())
+        {
+            // initialize with default values if not set
+            char *default_mp3Urls[] = {
+                "https://download.tvquran.com/download/selections/380/6088017b417a3.mp3",
+                "https://www.islamcan.com/audio/adhan/azan2.mp3",
+                "https://www.islamcan.com/audio/adhan/azan20.mp3",
+                "https://www.islamcan.com/audio/adhan/azan16.mp3",
+                "https://www.islamcan.com/audio/adhan/azan14.mp3"};
 
-        if (!config.city[0])
-        {
+            strcpy(config.ssid, "wifi ssid here");
+
+            strcpy(config.password, "wifi password here");
+
             strcpy(config.city, "Utrecht");
-        }
-        if (!config.country[0])
-        {
+
             strcpy(config.country, "Netherlands");
-        }
-        if (!config.method)
-        {
-            config.method = 5; // Egyptian General Authority of Survey
-        }
-        if (!config.api_endpoint[0])
-        {
-            strcpy(config.api_endpoint, "https://api.aladhan.com/v1/timingsByCity");
-        }
-        if (!config.speakerDisplayName[0])
-        {
+
+            config.method = 3; // Egyptian General Authority of Survey
+
             strcpy(config.speakerDisplayName, "Family room speaker");
-        }
-        if (!config.adhan_urls[0][0])
-        {
+
             strcpy(config.adhan_urls[0], default_mp3Urls[0]);
-        }
-        if (!config.adhan_urls[1][0])
-        {
+
             strcpy(config.adhan_urls[1], default_mp3Urls[1]);
-        }
-        if (!config.adhan_urls[2][0])
-        {
+
             strcpy(config.adhan_urls[2], default_mp3Urls[2]);
-        }
-        if (!config.adhan_urls[3][0])
-        {
+
             strcpy(config.adhan_urls[3], default_mp3Urls[3]);
-        }
-        if (!config.adhan_urls[4][0])
-        {
+
             strcpy(config.adhan_urls[4], default_mp3Urls[4]);
+        }
+        else
+        {
+            printConfig(config);
         }
     }
 
     void saveConfig()
     {
+        config.key = flash_key;
         EEPROM.begin(EEPROM_SIZE);
         EEPROM.put(0, config);
         EEPROM.commit();
@@ -190,7 +195,6 @@ private:
         Serial.println("City: " + String(config.city));
         Serial.println("Country: " + String(config.country));
         Serial.println("Method: " + String(config.method));
-        Serial.println("API Endpoint: " + String(config.api_endpoint));
         Serial.println("Speaker Display Name: " + String(config.speakerDisplayName));
         for (int i = 0; i < 5; i++)
         {
@@ -200,7 +204,8 @@ private:
 
     void handleRoot()
     {
-        String html = "<!DOCTYPE html>\n\
+        std::stringstream html;
+        html << "<!DOCTYPE html>\n\
         <html>\n\
         <head>\n\
         <title>ESP Adhan Configuration</title>\n\
@@ -267,70 +272,153 @@ private:
         </head>\n\
         <body>\n\
         <div class=\"container\">\n\
-            <h2>ESP Adhan Configuration</h2>\n\
-            <form action=\"/save\" method=\"post\">\n\
+        <h2>ESP Adhan Configuration</h2>\n";
+
+        // Get prayer times
+        String prayer_times = prayersToHtml(prayers);
+        html << prayer_times.c_str();
+        html << "<form action=\"/save\" method=\"post\">\n\
             <label for=\"ssid\">SSID:</label>\n\
             <input type=\"text\" id=\"ssid\" name=\"ssid\" value=\"";
-        html += config.ssid;
-        html += "\">\n\
+
+        html << config.ssid;
+        html << "\">\n\
           <label for=\"password\">Password:</label>\n\
           <input type=\"password\" id=\"password\" name=\"password\" value=\"";
-        html += config.password;
-        html += "\">\n\
+        html << config.password;
+        html << "\">\n\
           <label for=\"city\">City:</label>\n\
           <input type=\"text\" id=\"city\" name=\"city\" value=\"";
-        html += config.city;
-        html += "\">\n\
+        html << config.city;
+        html << "\">\n\
           <label for=\"country\">Country:</label>\
           <input type = \"text\" id = \"country\" name = \"country\" value =\"";
-        html += config.country;
-        html += "\"> \n";
+        html << config.country;
+        html << "\"> \n";
         // Method
-        html += "<label for=\"method\">Method:</label>";
-        html += "<select id=\"method\" name=\"method\">";
-        for (int i = 0; i < 6; i++)
+        html << "<label for=\"method\">Method:</label>";
+        html << "<select id=\"method\" name=\"method\">";
+
+        // loop through methods
+
+        if (methods_list != nullptr)
         {
-            html += "<option value=\"";
-            html += String(i);
-            html += "\"";
-            if (i == config.method)
+            int numMethods = methods_list->num_methods;
+            if (numMethods > 0)
             {
-                html += " selected";
+                // loop over the methods
+                for (int i = 0; i < numMethods; i++)
+                {
+                    html << "<option value=\"";
+                    html << String(methods_list->methods[i].id).c_str();
+                    html << "\"";
+                    if (methods_list->methods[i].id == config.method)
+                    {
+                        html << " selected";
+                    }
+                    html << ">";
+                    html << methods_list->methods[i].display_name.c_str();
+                    html << "</option>";
+                }
             }
-            html += ">";
-            html += String(i + 1);
-            html += "</option>";
+            else
+            {
+                Serial.println("No methods found");
+                html << "<option value=\"";
+                html << String(5).c_str();
+                html << "\"";
+                html << " selected";
+                html << ">";
+                html << "default method";
+                html << "</option>";
+            }
+            html << "</select>\n";
         }
-        html += "</select>\n";
+        else
+        {
+            Serial.println("methods is null");
+            html << "<option value=\"";
+            html << String(5).c_str();
+            html << "\"";
+            html << " selected";
+            html << ">";
+            html << "default method";
+            html << "</option>";
+            html << "</select>\n";
+        }
 
         // API Endpoint
-        html += "<label for=\"api_endpoint\">API Endpoint:</label>";
-        html += "<input type=\"text\" id=\"api_endpoint\" name=\"api_endpoint\" value=\"";
-        html += config.api_endpoint;
-        html += "\">\n";
+        // html << "<label for=\"api_endpoint\">API Endpoint:</label>";
+        // html << "<input type=\"text\" id=\"api_endpoint\" name=\"api_endpoint\" value=\"";
+        // html << config.api_endpoint;
+        // html << "\">\n";
 
         // Speaker Display Name
-        html += "<label for=\"speakerDisplayName\">Speaker Display Name:</label>";
-        html += "<input type=\"text\" id=\"speakerDisplayName\" name=\"speakerDisplayName\" value=\"";
-        html += config.speakerDisplayName;
-        html += "\">\n";
+        html << "<label for=\"speakerDisplayName\">Speaker Display Name:</label>\
+          <input type = \"text\" id = \"speakerDisplayName\" name = \"speakerDisplayName\" value =\"";
+        html << config.speakerDisplayName;
+        html << "\"> \n";
 
         // Adhan URLs
         for (int i = 0; i < 5; i++)
         {
             String adhanLabel = "Adhan URL " + String(i + 1) + ":";
             String adhanInputId = "adhan_url_" + String(i);
-            html += "<label for=\"" + adhanInputId + "\">" + adhanLabel + "</label>";
-            html += "<input type=\"text\" id=\"" + adhanInputId + "\" name=\"" + adhanInputId + "\" value=\"";
-            html += config.adhan_urls[i];
-            html += "\">\n";
+            html << "<label for=\"";
+            html << adhanInputId.c_str();
+            html << adhanInputId.c_str();
+            html << "\">";
+            html << adhanLabel.c_str();
+            html << "</label>";
+            html << "<input type=\"text\" id=\"";
+            html << adhanInputId.c_str();
+            html << "\" name=\"";
+            html << adhanInputId.c_str();
+            html << "\" value=\"";
+            html << config.adhan_urls[i];
+            html << "\">\n";
         }
 
         // Save Button
-        html += "<input type=\"submit\" value=\"Save\">";
-        html += "</form></body></html>";
+        html << "<input type=\"submit\" value=\"Save & Restart\">";
+        html << "</form></div></body></html>";
 
-        server.send(200, "text/html", html);
+        String htmlString = html.str().c_str();
+        server.send(200, "text/html", htmlString);
+    }
+
+    String prayersToHtml(struct tm prayers[])
+    {
+        String html = "<div style=\"display: flex; flex-direction: row;\">";
+
+        for (int i = 0; i < 5; i++)
+        {
+            String time_str = formatTime(prayers[i]);
+            String prayer_name = getPrayerName(i);
+
+            String prayer_html = "<div style=\"padding: 5px; margin-right: 10px; background-color: #f2f2f2;\">" + prayer_name + ": " + time_str + "</div>";
+
+            html += prayer_html;
+        }
+
+        html += "</div><br><br>";
+
+        return html;
+    }
+
+    // formatTime function takes a tm struct representing a time and returns a formatted string
+    char *formatTime(struct tm time)
+    {
+        static char formattedTime[6];
+        sprintf(formattedTime, "%02d:%02d", time.tm_hour, time.tm_min);
+        return formattedTime;
+    }
+
+    // getPrayerName function takes an integer representing a prayer index (0-4) and returns the prayer name
+    char *getPrayerName(int index)
+    {
+        char *prayerNames[] = {"Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"};
+        return prayerNames[index];
     }
 
     void handleSave()
@@ -354,7 +442,6 @@ private:
         city.toCharArray(config.city, sizeof(config.city));
         country.toCharArray(config.country, sizeof(config.country));
         config.method = method;
-        apiEndpoint.toCharArray(config.api_endpoint, sizeof(config.api_endpoint));
         speakerDisplayName.toCharArray(config.speakerDisplayName, sizeof(config.speakerDisplayName));
         for (int i = 0; i < 5; i++)
         {
@@ -366,6 +453,9 @@ private:
 
         server.sendHeader("Location", "/index.html", true);
         server.send(302, "text/plain", "");
+        // Restart ESP so that the new config is used
+        delay(5 * 1000);
+        esp_restart();
     }
 
     void handleNotFound()

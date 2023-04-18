@@ -9,10 +9,9 @@
 #include <time.h>
 #include <EEPROM.h>
 
-
 // constants and variables
 const int NUM_PRAYERS = 5;
-struct tm *prayer_times = new tm[NUM_PRAYERS];
+struct tm *prayer_times = new tm[NUM_PRAYERS]; 
 
 AdhanPlayer adhanPlayer;
 PrayerApiClient prayerClient;
@@ -24,6 +23,7 @@ void setup()
   Serial.begin(115200);
   Serial.println("");
   Serial.println("Starting ...");
+
   configurator.begin();
   static bool configSet = false;
   static Config config;
@@ -31,7 +31,7 @@ void setup()
   while (!configSet)
   {
     config = configurator.getConfig();
-    if (strlen(config.ssid) > 0 && strlen(config.password) > 0)
+    if (configurator.isConfigSet())
     {
       Serial.println("Config set!");
       configSet = true;
@@ -47,13 +47,14 @@ void setup()
   adhanPlayer.connect(config.speakerDisplayName);
 
   Serial.println("calling the API ...");
-  setPrayerTimes(config.city, config.country);
+  setPrayerTimes(config.city, config.country, config.method);
 }
 
-void setPrayerTimes(String city, String country)
+void setPrayerTimes(String city, String country, int method )
 {
   // Call the API and parse the JSON response
-  struct tm *response = prayerClient.getPrayerTimes(city, country, config.method);
+  MethodList *methods_list = prayerClient.getMethods();
+  struct tm *response = prayerClient.getPrayerTimes(city, country, method);
   if (response != nullptr)
   {
     prayer_times = response;
@@ -62,6 +63,8 @@ void setPrayerTimes(String city, String country)
       Serial.print("Prayer #" + String(i) + ": ");
       printLocalTime(&prayer_times[i]);
     }
+    configurator.setPrayerTimes(prayer_times);
+    configurator.setMethodsList(methods_list);
   }
 }
 
@@ -95,7 +98,7 @@ void loop()
     try
     {
       // Set prayer times by calling the API
-      setPrayerTimes(config.city, config.country);
+      setPrayerTimes(config.city, config.country, config.method);
       Serial.println("Prayer times have been updated for today");
       adhanPlayer.sendNotification("Prayer times have been successfuly updated for today");
       // Wait for a minute before running again
@@ -114,7 +117,7 @@ void loop()
     {
       try
       {
-        adhanPlayer.playAdhan(i,config.adhan_urls[i]);
+        adhanPlayer.playAdhan(i, config.adhan_urls[i]);
         // Wait for a minute before running again
         delay(60 * 1000);
       }
@@ -125,6 +128,6 @@ void loop()
     }
   }
   configurator.loop();
-  // Wait for 5 seconds before running again
-  delay(5 * 1000);
+  // Wait for 2 seconds before running again
+  delay(2 * 1000);
 }
