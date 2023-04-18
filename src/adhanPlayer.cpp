@@ -7,17 +7,8 @@ private:
   const char *prayerNames[5] = {"Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"};
 
 public:
-  void playAdhan(int prayer)
-  {
-    const char *mp3Urls[] = {
-        "https://download.tvquran.com/download/selections/380/6088017b417a3.mp3",
-        "https://www.islamcan.com/audio/adhan/azan2.mp3",
-        "https://www.islamcan.com/audio/adhan/azan20.mp3",
-        "https://www.islamcan.com/audio/adhan/azan16.mp3",
-        "https://www.islamcan.com/audio/adhan/azan14.mp3"};
-
-    const char *mp3Url = mp3Urls[prayer];
-
+  void playAdhan(int prayer, char *mp3Url)
+  { 
     // Notify the name of the prayer
     String notification = "It's time for " + String(prayerNames[prayer]) + " prayer";
     sendNotification(notification.c_str());

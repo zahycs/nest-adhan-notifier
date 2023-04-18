@@ -5,60 +5,55 @@
 #include <esp8266-google-home-notifier.h>
 #include "AdhanPlayer.cpp"
 #include "PrayerApiClient.cpp"
+#include "configurator.cpp"
 #include <time.h>
-// WiFi credentials
-const char *ssid = "Your SSID";
-const char *password = "your password";
+#include <EEPROM.h>
 
-// Aladhan API endpoint and parameters
-const char *api_endpoint = "https://api.aladhan.com/v1/timingsByCity";
-const char *city = "Utrecht";
-const char *country = "NL";
-const int method = 5; // for egyptian general authority of survey
 
 // constants and variables
 const int NUM_PRAYERS = 5;
-const char speakerDisplayName[] = "Family room speaker";
-unsigned long lastApiCallMillis = 0;
 struct tm *prayer_times = new tm[NUM_PRAYERS];
 
 AdhanPlayer adhanPlayer;
 PrayerApiClient prayerClient;
+Configurator configurator;
+Config config;
 
 void setup()
 {
-
   Serial.begin(115200);
   Serial.println("");
-  Serial.print("connecting to Wi-Fi");
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-
-  while (WiFi.status() != WL_CONNECTED)
+  Serial.println("Starting ...");
+  configurator.begin();
+  static bool configSet = false;
+  static Config config;
+  // wait for the user to submit the config object
+  while (!configSet)
   {
-    delay(250);
-    Serial.print(".");
+    config = configurator.getConfig();
+    if (strlen(config.ssid) > 0 && strlen(config.password) > 0)
+    {
+      Serial.println("Config set!");
+      configSet = true;
+    }
+    configurator.loop();
   }
-  Serial.println("");
-  Serial.println("connected.");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP()); // Print the local IP
 
   // init time
   configTime(0, 0, "pool.ntp.org");
   setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
   tzset();
 
-  adhanPlayer.connect(speakerDisplayName);
+  adhanPlayer.connect(config.speakerDisplayName);
 
   Serial.println("calling the API ...");
-  setPrayerTimes(city, country);
+  setPrayerTimes(config.city, config.country);
 }
 
 void setPrayerTimes(String city, String country)
 {
   // Call the API and parse the JSON response
-  struct tm *response = prayerClient.getPrayerTimes(city, country, method);
+  struct tm *response = prayerClient.getPrayerTimes(city, country, config.method);
   if (response != nullptr)
   {
     prayer_times = response;
@@ -88,7 +83,6 @@ void printLocalTime(struct tm *local_time)
 
 void loop()
 {
-
   time_t now = time(nullptr);
   struct tm *local_time = localtime(&now);
   int now_hour = local_time->tm_hour;
@@ -101,7 +95,7 @@ void loop()
     try
     {
       // Set prayer times by calling the API
-      setPrayerTimes(city, country);
+      setPrayerTimes(config.city, config.country);
       Serial.println("Prayer times have been updated for today");
       adhanPlayer.sendNotification("Prayer times have been successfuly updated for today");
       // Wait for a minute before running again
@@ -120,7 +114,7 @@ void loop()
     {
       try
       {
-        adhanPlayer.playAdhan(i);
+        adhanPlayer.playAdhan(i,config.adhan_urls[i]);
         // Wait for a minute before running again
         delay(60 * 1000);
       }
@@ -130,7 +124,7 @@ void loop()
       }
     }
   }
-
+  configurator.loop();
   // Wait for 5 seconds before running again
   delay(5 * 1000);
 }
