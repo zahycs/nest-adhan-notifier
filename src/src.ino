@@ -11,13 +11,12 @@
 
 // constants and variables
 const int NUM_PRAYERS = 5;
-struct tm *prayer_times = new tm[NUM_PRAYERS]; 
+struct tm *prayer_times = new tm[NUM_PRAYERS];
 
 AdhanPlayer adhanPlayer;
 PrayerApiClient prayerClient;
 Configurator configurator;
 Config config;
-
 void setup()
 {
   Serial.begin(115200);
@@ -50,7 +49,7 @@ void setup()
   setPrayerTimes(config.city, config.country, config.method);
 }
 
-void setPrayerTimes(String city, String country, int method )
+void setPrayerTimes(String city, String country, int method)
 {
   // Call the API and parse the JSON response
   MethodList *methods_list = prayerClient.getMethods();
@@ -100,7 +99,7 @@ void loop()
       // Set prayer times by calling the API
       setPrayerTimes(config.city, config.country, config.method);
       Serial.println("Prayer times have been updated for today");
-      adhanPlayer.sendNotification("Prayer times have been successfuly updated for today");
+      adhanPlayer.sendNotification("Prayer times have been successfully updated for today");
       // Wait for a minute before running again
       delay(60 * 1000);
     }
@@ -109,25 +108,37 @@ void loop()
       Serial.println(" Error setting prayer times, " + String(e.what()));
     }
   }
-
+   config = configurator.getConfig();
   // Check if it's time for the next prayer and play the MP3
   for (int i = 0; i < NUM_PRAYERS; i++)
   {
+   
     if (now_hour == prayer_times[i].tm_hour && now_min == prayer_times[i].tm_min)
     {
-      try
-      {
-        adhanPlayer.playAdhan(i, config.adhan_urls[i]);
-        // Wait for a minute before running again
-        delay(60 * 1000);
-      }
-      catch (const std::exception &e)
-      {
-        Serial.println(" error playing adhan, " + String(e.what()));
-      }
+      playAdhan(i, config.adhan_urls[i]);
     }
+  }
+  // Check if the user wants to play a test adhan
+  if (configurator.isPlayTestAdhan())
+  {
+    playAdhan(0, config.adhan_urls[0]);
+    configurator.setPlayTestAdhan(false);
   }
   configurator.loop();
   // Wait for 2 seconds before running again
   delay(2 * 1000);
+}
+
+void playAdhan(int prayer_index, char *adhan_url)
+{
+  try
+  {
+    adhanPlayer.playAdhan(prayer_index, adhan_url);
+    // Wait for a minute before running again
+    delay(60 * 1000);
+  }
+  catch (const std::exception &e)
+  {
+    Serial.println(" error playing adhan, " + String(e.what()));
+  }
 }

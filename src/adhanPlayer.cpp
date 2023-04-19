@@ -20,7 +20,7 @@ public:
       Serial.println(ghn.getLastError());
       return;
     }
-    Serial.println("Adhan played.");
+    Serial.println("Adhan played. url: " + String(mp3Url));
   }
 
   void sendNotification(const char *notification)

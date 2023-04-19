@@ -19,7 +19,7 @@ struct Config
     int method;
     // char api_endpoint[64];
     char speakerDisplayName[32];
-    char adhan_urls[5][64];
+    char adhan_urls[5][120];
 };
 
 class Configurator
@@ -33,31 +33,40 @@ private:
     tm *prayers;
     // array of methods struct
     MethodList *methods_list;
+    bool playTestAdhan = false;
 
 public:
-    void begin()
+void begin()
+{
+    EEPROM.begin(EEPROM_SIZE);
+
+    // load config from eeprom
+    loadConfig();
+
+    // check if config is set, otherwise start softAP
+    if (config.key != flash_key)
     {
-        EEPROM.begin(EEPROM_SIZE);
+        startSoftAP();
+    }
+    else
+    {
+        // start wifi
+        WiFi.begin(config.ssid, config.password);
 
-        // load config from eeprom
-        loadConfig();
-
-        // check if ssid and password are set, if not, start SoftAP
-        if (config.key != flash_key)
+        Serial.println("Connecting to WiFi...");
+        unsigned long startAttempt = millis(); // initialize timer
+        while (WiFi.status() != WL_CONNECTED && (millis() - startAttempt) < 60000) // add timer to while loop condition
         {
-            startSoftAP();
+            delay(250);
+            Serial.print(".");
         }
-        else
+        if (WiFi.status() != WL_CONNECTED) // if connection attempt exceeded 1 minute
         {
-            // start wifi
-            WiFi.begin(config.ssid, config.password);
-
-            Serial.println("Connecting to WiFi...");
-            while (WiFi.status() != WL_CONNECTED)
-            {
-                delay(250);
-                Serial.print(".");
-            }
+            WiFi.disconnect(); // disconnect from WiFi
+            startSoftAP(); // start SoftAP
+        }
+        else // if WiFi is connected
+        {
             Serial.println("WiFi connected");
 
             initMDNS();
@@ -66,6 +75,8 @@ public:
         Serial.print("IP address: ");
         Serial.println(WiFi.localIP()); // Print the local IP
     }
+}
+
     void loop()
     {
         server.handleClient();
@@ -86,6 +97,14 @@ public:
     bool isConfigSet()
     {
         return config.key == flash_key;
+    }
+    bool isPlayTestAdhan()
+    {
+        return this->playTestAdhan;
+    }
+    void setPlayTestAdhan(bool playTestAdhan)
+    {
+        this->playTestAdhan = playTestAdhan;
     }
 
 private:
@@ -112,6 +131,9 @@ private:
 
         server.on("/save", HTTP_POST, [this]()
                   { handleSave(); });
+
+        server.on("/playTest", HTTP_POST, [this]()
+                  { handlePlayTestAdhan(); });
 
         server.onNotFound([this]()
                           { handleNotFound(); });
@@ -272,7 +294,8 @@ private:
             border-radius: 4px;\n\
             box-sizing: border-box;\n\
             }\n\
-            input[type=submit] {\n\
+            .save-restart {\n\
+            float: right;\n\
             background-color: #4CAF50;\n\
             color: white;\n\
             padding: 12px 20px;\n\
@@ -280,8 +303,14 @@ private:
             border-radius: 4px;\n\
             cursor: pointer;\n\
             }\n\
-            input[type=submit]:hover {\n\
-            background-color: #45a049;\n\
+            .play-test {\n\
+            float: right;\n\
+            background-color: blue;\n\
+            color: white;\n\
+            padding: 12px 20px;\n\
+            border: none;\n\
+            border-radius: 4px;\n\
+            cursor: pointer;\n\
             }\n\
         </style>\n\
         </head>\n\
@@ -395,14 +424,15 @@ private:
         }
 
         // Save Button
-        html << "<input type=\"submit\" value=\"Save & Restart\">";
-        html << "</form></div></body></html>";
+        html << "<input type=\"submit\" class=\"save-restart\" value=\"Save & Restart\">";
+        html << "</form>";
+        html << "</div></body></html>";
 
         return html.str().c_str();
     }
     String buildErrorPage(const char *err)
     {
-      return "<!DOCTYPE html>\n\
+        return "<!DOCTYPE html>\n\
             <html>\n\
             <head>\n\
             <title>ESP Adhan Configuration</title>\n\
@@ -431,14 +461,14 @@ private:
             <div class=\"container\">\n\
             <h1>ESP Adhan Configuration</h1>\n\
             <p class=\"error\">Error: " +
-                          String(err) + "</p>\n\
+               String(err) + "</p>\n\
             </div>\n\
             </body>\n\
             </html>";
     }
     String buildPrayersHtml(struct tm prayers[])
     {
-        if(prayers == nullptr)
+        if (prayers == nullptr)
         {
             return "";
         }
@@ -453,7 +483,9 @@ private:
 
             html += prayer_html;
         }
-
+        html += "<form action=\"/playTest\" method=\"post\">";
+        html += "<input type=\"submit\" class=\"play-test\" value=\"Play Test\">";
+        html += "</form>";
         html += "</div><br><br>";
 
         return html;
@@ -510,7 +542,12 @@ private:
         delay(5 * 1000);
         esp_restart();
     }
-
+    void handlePlayTestAdhan()
+    {
+        playTestAdhan = true;
+        server.sendHeader("Location", "/home", true);
+        server.send(302, "text/plain", "");
+    }
     void handleNotFound()
     {
         server.send(404, "text/plain", "404 Not Found");
