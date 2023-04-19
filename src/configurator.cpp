@@ -107,7 +107,7 @@ private:
     void initServer()
     {
         // Start the server
-        server.on("/index.html", HTTP_GET, [this]()
+        server.on("/home", HTTP_GET, [this]()
                   { handleRoot(); });
 
         server.on("/save", HTTP_POST, [this]()
@@ -121,7 +121,7 @@ private:
         Serial.println("Web server started");
         Serial.print("Access it at http://");
         Serial.print(host_name);
-        Serial.println(".local/index.html");
+        Serial.println(".local/home");
     }
 
     void initMDNS()
@@ -204,6 +204,21 @@ private:
 
     void handleRoot()
     {
+        String htmlString = "";
+        try
+        {
+            htmlString = buildHomePage();
+        }
+        catch (const std::exception &e)
+        {
+            Serial.println(e.what());
+            // create html with error message from the exception
+            htmlString = buildErrorPage(e.what());
+        }
+        server.send(200, "text/html", htmlString);
+    }
+    String buildHomePage()
+    {
         std::stringstream html;
         html << "<!DOCTYPE html>\n\
         <html>\n\
@@ -275,7 +290,7 @@ private:
         <h2>ESP Adhan Configuration</h2>\n";
 
         // Get prayer times
-        String prayer_times = prayersToHtml(prayers);
+        String prayer_times = buildPrayersHtml(prayers);
         html << prayer_times.c_str();
         html << "<form action=\"/save\" method=\"post\">\n\
             <label for=\"ssid\">SSID:</label>\n\
@@ -325,7 +340,7 @@ private:
             {
                 Serial.println("No methods found");
                 html << "<option value=\"";
-                html << String(5).c_str();
+                html << String(config.method).c_str();
                 html << "\"";
                 html << " selected";
                 html << ">";
@@ -338,7 +353,7 @@ private:
         {
             Serial.println("methods is null");
             html << "<option value=\"";
-            html << String(5).c_str();
+            html << String(config.method).c_str();
             html << "\"";
             html << " selected";
             html << ">";
@@ -383,12 +398,50 @@ private:
         html << "<input type=\"submit\" value=\"Save & Restart\">";
         html << "</form></div></body></html>";
 
-        String htmlString = html.str().c_str();
-        server.send(200, "text/html", htmlString);
+        return html.str().c_str();
     }
-
-    String prayersToHtml(struct tm prayers[])
+    String buildErrorPage(const char *err)
     {
+      return "<!DOCTYPE html>\n\
+            <html>\n\
+            <head>\n\
+            <title>ESP Adhan Configuration</title>\n\
+            <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n\
+            <style>\n\
+                body {\n\
+                font-family: Arial, Helvetica, sans-serif;\n\
+                margin: 0;\n\
+                padding: 0;\n\
+                background-color: #f2f2f2;\n\
+                }\n\
+                .container {\n\
+                width: 90%;\n\
+                margin: auto;\n\
+                background-color: #fff;\n\
+                padding: 20px;\n\
+                border-radius: 10px;\n\
+                box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.2);\n\
+                }\n\
+                .error {\n\
+                color: red;\n\
+                }\n\
+            </style>\n\
+            </head>\n\
+            <body>\n\
+            <div class=\"container\">\n\
+            <h1>ESP Adhan Configuration</h1>\n\
+            <p class=\"error\">Error: " +
+                          String(err) + "</p>\n\
+            </div>\n\
+            </body>\n\
+            </html>";
+    }
+    String buildPrayersHtml(struct tm prayers[])
+    {
+        if(prayers == nullptr)
+        {
+            return "";
+        }
         String html = "<div style=\"display: flex; flex-direction: row;\">";
 
         for (int i = 0; i < 5; i++)
@@ -451,7 +504,7 @@ private:
         Serial.println("Saving config...");
         saveConfig();
 
-        server.sendHeader("Location", "/index.html", true);
+        server.sendHeader("Location", "/home", true);
         server.send(302, "text/plain", "");
         // Restart ESP so that the new config is used
         delay(5 * 1000);
