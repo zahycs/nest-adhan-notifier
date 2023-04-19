@@ -273,7 +273,7 @@ private:
             justify-items: start;\n\
             }\n\
             label {\n\
-            font-weight: bold;\n\
+            font-weight: normal; font-size: 14px;line-height: 50px;\n\
             }\n\
             input[type=text],\n\
             input[type=password] {\n\
@@ -312,12 +312,23 @@ private:
             border-radius: 4px;\n\
             cursor: pointer;\n\
             }\n\
+            #logo {\n\
+            display: flex;\n\
+            justify-content: center;\n\
+            align-items: center;\n\
+            height: 100px; /* adjust to your preferred size */\n\
+            }\n\
+            #logo img {\n\
+            max-height: 100%;\n\
+            max-width: 100%;\n\
+            }\n\
         </style>\n\
         </head>\n\
         <body>\n\
         <div class=\"container\">\n\
-        <h2>ESP Adhan Configuration</h2>\n";
-
+        <h2>ESP Adhan Configuration</h2>\n\
+        <div id=\"logo\">\n\
+        <img src=\"https://raw.githubusercontent.com/zahycs/nest-adhan-notifier/main/img/l-1.png\" alt=\"Logo\"></div>\n";
         // Get prayer times
         String prayer_times = buildPrayersHtml(prayers);
         html << prayer_times.c_str();
