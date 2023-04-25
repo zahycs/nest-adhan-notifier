@@ -1,4 +1,3 @@
-#include <WiFi.h>
 #include <WebServer.h>
 #include <EEPROM.h>
 #include <ESPmDNS.h>
@@ -9,73 +8,61 @@
 
 #define EEPROM_SIZE 1024
 
-struct Config
-{
-    String key;
-    char ssid[32];
-    char password[32];
-    char city[32];
-    char country[32];
-    int method;
-    // char api_endpoint[64];
-    char speakerDisplayName[32];
-    char adhan_urls[5][120];
-};
-
 class Configurator
 {
 private:
     Config config;
     WebServer server;
-    const char ap_ssid[32] = "ESP32-Configurator";
+    const char ap_ssid[32] = "adhan_configurator";
     const char *host_name = "adhan";
-    const String flash_key = "flash";
+    const char flash_key[16] = "flash";
     tm *prayers;
     // array of methods struct
     MethodList *methods_list;
     bool playTestAdhan = false;
 
 public:
-void begin()
-{
-    EEPROM.begin(EEPROM_SIZE);
-
-    // load config from eeprom
-    loadConfig();
-
-    // check if config is set, otherwise start softAP
-    if (config.key != flash_key)
+    void begin()
     {
-        startSoftAP();
-    }
-    else
-    {
-        // start wifi
-        WiFi.begin(config.ssid, config.password);
+        EEPROM.begin(EEPROM_SIZE);
 
-        Serial.println("Connecting to WiFi...");
-        unsigned long startAttempt = millis(); // initialize timer
-        while (WiFi.status() != WL_CONNECTED && (millis() - startAttempt) < 60000) // add timer to while loop condition
+        // load config from eeprom
+        loadConfig();
+        Serial.println("flash key : ");
+        Serial.println(config.key);
+        // check if config is set, otherwise start softAP
+        if (isConfigSet())
         {
-            delay(250);
-            Serial.print(".");
-        }
-        if (WiFi.status() != WL_CONNECTED) // if connection attempt exceeded 1 minute
-        {
-            WiFi.disconnect(); // disconnect from WiFi
-            startSoftAP(); // start SoftAP
-        }
-        else // if WiFi is connected
-        {
-            Serial.println("WiFi connected");
+            // start wifi
+            WiFi.begin(config.ssid, config.password);
 
-            initMDNS();
-            initServer();
+            Serial.println("Connecting to WiFi...");
+            unsigned long startAttempt = millis();                                     // initialize timer
+            while (WiFi.status() != WL_CONNECTED && (millis() - startAttempt) < 60000) // add timer to while loop condition
+            {
+                delay(250);
+                Serial.print(".");
+            }
+            if (WiFi.status() != WL_CONNECTED) // if connection attempt exceeded 1 minute
+            {
+                WiFi.disconnect(); // disconnect from WiFi
+                startSoftAP();     // start SoftAP
+            }
+            else // if WiFi is connected
+            {
+                Serial.println("WiFi connected");
+
+                initMDNS();
+                initServer();
+            }
+            Serial.print("IP address: ");
+            Serial.println(WiFi.localIP()); // Print the local IP
         }
-        Serial.print("IP address: ");
-        Serial.println(WiFi.localIP()); // Print the local IP
+        else
+        {
+            startSoftAP();
+        }
     }
-}
 
     void loop()
     {
@@ -96,7 +83,7 @@ void begin()
     }
     bool isConfigSet()
     {
-        return config.key == flash_key;
+        return strcmp(config.key, flash_key) == 0;
     }
     bool isPlayTestAdhan()
     {
@@ -112,7 +99,8 @@ private:
     {
         Serial.println("Starting SoftAP");
         Serial.println("Connect to ESP32 to configure WiFi");
-        Serial.println("SSID: ESP32-Configurator");
+        Serial.print("SSID: ");
+        Serial.println(ap_ssid);
         WiFi.softAP(ap_ssid);
 
         IPAddress IP = WiFi.softAPIP();
@@ -161,6 +149,7 @@ private:
     {
         EEPROM.get(0, config);
         Serial.println("config loaded..");
+
         EEPROM.end();
 
         if (!isConfigSet())
@@ -203,11 +192,12 @@ private:
 
     void saveConfig()
     {
-        config.key = flash_key;
+        strcpy(config.key, flash_key);
         EEPROM.begin(EEPROM_SIZE);
         EEPROM.put(0, config);
         EEPROM.commit();
         EEPROM.end();
+        Serial.println("Config has been committed to EEPROM");
     }
 
     void printConfig(Config config)
@@ -519,6 +509,7 @@ private:
 
     void handleSave()
     {
+        Serial.println("Saving configs....");
         String ssid = server.arg("ssid");
         String password = server.arg("password");
         String city = server.arg("city");

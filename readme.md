@@ -1,72 +1,36 @@
-# ESP32 Prayer Times Reminder on Google nest
+# ESP32 Prayer Times Reminder on Google Nest
 
-This is an Arduino sketch that uses an ESP8266 microcontroller to retrieve and play Islamic prayer times as reminders. The prayer times are retrieved from the Aladhan API and the adhan (call to prayer) is played using MP3 files.
-
-## Configuration
-
-To use this sketch, you will need to configure the following parameters:
-
-### WiFi credentials
-
-```cpp
-const char *ssid = "Your SSID";
-const char *password = "your password";
-```
-
-Replace Your SSID and your password with the SSID and password of your WiFi network.
-
-### Speaker name
-
-```cpp
-const char displayName[] = "Family room speaker";
-```
-update your Google nest speaker display name as shown above. 
-
-### Aladhan API endpoint and parameters
-
-```cpp
-const char *api_endpoint = "https://api.aladhan.com/v1/timingsByCity";
-const char *city = "Utrecht";
-const char *country = "NL";
-const int method = 5; // for egyptian general authority of survey
-```
-
-Replace Utrecht and NL with the name of your city and country. You can also change the method parameter to a different value to use a different calculation method.
-
-### Adhan MP3 files
-The MP3 files used for the adhan can be configured in the AdhanPlayer.cpp file. The file contains an array of 5 URLs, one for each prayer time:
-
-```cpp
-const char *adhan_urls[] = {
-  "https://example.com/fajr.mp3",
-  "https://example.com/dhuhr.mp3",
-  "https://example.com/asr.mp3",
-  "https://example.com/maghrib.mp3",
-  "https://example.com/isha.mp3"
-};
-```
-
-Replace the URLs with the URLs of your own MP3 files.
-
-### Aladhan API configuration
-
-The API endpoint and parameters are used in the prayerApiClient.cpp file. You can modify the following variables to change the API configuration:
-
-```cpp
-const char *api_endpoint = "https://api.aladhan.com/v1/timingsByCity";
-const char *api_city = "Utrecht";
-const char *api_country = "NL";
-const int api_method = 5; // for egyptian general authority of survey
-```
+This project uses an ESP32 microcontroller to retrieve and play Islamic prayer times as reminders on your Google Nest device. The prayer times are retrieved from the Aladhan API and the adhan (call to prayer) is played using MP3 files.
 
 ## Usage
+1. To use this project, follow these steps:
 
-Once you have configured the sketch with your WiFi credentials, API endpoint and parameters, and adhan MP3 files, you can upload it to your ESP8266 microcontroller using the Arduino IDE. The microcontroller will then connect to your WiFi network and retrieve the prayer times from the Aladhan API. The adhan will be played using the MP3 files at the appropriate times.
+1. Install the Visual Studio Code editor on your computer.
 
-## Credits
+1. Install the PlatformIO extension for Visual Studio Code.
 
-This sketch uses the following libraries:
+1. Open the project folder in Visual Studio Code and connect your ESP32 board to your computer.
 
-* ArduinoJson
-* HTTPClient
-* ESP8266-Google-Home-Notifier
+1. Build and upload the project to your ESP32 board by running the following command in the terminal of Visual Studio Code:
+
+```
+pio run -t upload
+```
+1. After uploading, power on the ESP32 board and wait a few seconds.
+
+1. The ESP32 board will start an Access Point (AP) called `adhan_configurator`. Connect your computer or mobile device to this AP.
+
+1. Open a web browser on your computer or mobile device and navigate to http://adhan.local/home.
+
+1. On the web page, configure the WiFi settings for the ESP32 board and hit "Save and Restart".
+
+1. The ESP32 board will now connect to your WiFi network and retrieve the prayer times from the Aladhan API. The adhan will be played using the MP3 files at the appropriate times.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+
+
+
+
