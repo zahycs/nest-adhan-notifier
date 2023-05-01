@@ -9,12 +9,22 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-    - name: Install PlatformIO
-      uses: https://github.com/platformio/platformio-action@v3
+    - uses: actions/cache@v3
       with:
-          version: "latest"
-          platform: "espressif32"
-          board: "esp32"
+        path: |
+          ~/.cache/pip
+          ~/.platformio/.cache
+        key: ${{ runner.os }}-pio
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    - name: Install PlatformIO Core
+      run: pip install --upgrade platformio
+
+    - name: Download external library
+      run: |
+          wget https://github.com/xxxajk/spi4teensy3/archive/master.zip -O /tmp/spi4teensy3.zip
+          unzip /tmp/spi4teensy3.zip -d /tmp
     - name: Build firmware and SPIFFS
       run: |
         platformio run --target buildfs
