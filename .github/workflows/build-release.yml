@@ -48,9 +48,9 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: .pio/build/esp32/firmware.bin
+        path: .pio/build/esp32dev/firmware.bin
     - name: Upload spiffs.bin
       uses: actions/upload-artifact@v2
       with:
         name: spiffs
-        path: .pio/build/esp32/spiffs.bin
+        path: .pio/build/esp32dev/spiffs.bin
