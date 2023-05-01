@@ -10,11 +10,11 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
     - name: Install PlatformIO
-      uses: platformio/platformio-action@v3
+      uses: https://github.com/platformio/platformio-action@v3
       with:
-        version: "latest"
-        platform: "espressif32"
-        board: "esp32"
+          version: "latest"
+          platform: "espressif32"
+          board: "esp32"
     - name: Build firmware and SPIFFS
       run: |
         platformio run --target buildfs
