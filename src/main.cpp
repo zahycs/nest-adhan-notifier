@@ -4,8 +4,8 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <esp8266-google-home-notifier.h>
-#include "AdhanPlayer.cpp"
-#include "PrayerApiClient.cpp"
+#include "adhanPlayer.cpp"
+#include "prayerApiClient.cpp"
 #include "configurator.cpp"
 #include <time.h>
 #include <EEPROM.h>
