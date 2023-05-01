@@ -27,7 +27,7 @@ pio run -t upload
 1. The ESP32 board will now connect to your WiFi network and retrieve the prayer times from the Aladhan API. The adhan will be played using the MP3 files at the appropriate times.
 
 ## OTA Updates
-The firmeware now supports over the air updates, more details about it will be added soon
+The firmware now supports over the air updates, more details about it will be added soon.
 
 ## License
 
