@@ -9,6 +9,9 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
+    - name: Create build directory
+      run: |
+          mkdir -p build
     - uses: actions/cache@v3
       with:
         path: |
