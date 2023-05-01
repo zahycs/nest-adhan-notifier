@@ -31,8 +31,8 @@ jobs:
     - name: Build firmware and SPIFFS
       run: |
         platformio run --target buildfs
-        #platformio run --target build
-        pio run
+        platformio run 
+        #--target build
     
     - name: Upload firmware.bin
       uses: actions/upload-artifact@v2
