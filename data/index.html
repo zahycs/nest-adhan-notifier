@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <title>ESP Adhan Configuration</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="icon"  type="image/png" href="l-1.png">
+</head>
+
+<body>
+    <div class="container">
+        <h2>ESP Adhan Configuration</h2>
+        <div id="logo">
+            <img src="l-1.png" alt="Logo">
+        </div>
+        <div style="display: flex; flex-direction: row;">
+            <div style="padding: 5px; margin-right: 10px; background-color: #f2f2f2;">Fajr: %TMPL_FAJR%</div>
+            <div style="padding: 5px; margin-right: 10px; background-color: #f2f2f2;">Dhuhr: %TMPL_DHUHR%</div>
+            <div style="padding: 5px; margin-right: 10px; background-color: #f2f2f2;">Asr: %TMPL_ASR%</div>
+            <div style="padding: 5px; margin-right: 10px; background-color: #f2f2f2;">Maghrib: %TMPL_MAGHRIB%</div>
+            <div style="padding: 5px; margin-right: 10px; background-color: #f2f2f2;">Isha: %TMPL_ISHA%</div>
+            <form action="/playTest" method="post"><input type="submit" class="play-test"
+                    value="Play Test"></form>
+        </div><br><br>
+        <form action="/save" method="post">
+            <label for="ssid">SSID:</label>
+            <input type="text" id="ssid" name="ssid" value="%TMPL_SSID%">
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" value="%TMPL_PASSWORD%">
+            <label for="city">City:</label>
+            <input type="text" id="city" name="city" value="%TMPL_CITY%">
+            <label for="country">Country:</label> <input type="text" id="country" name="country" value="%TMPL_COUNTRY%">
+            <label for="method">Method:</label><select id="method" name="method">
+                 %TMPL_METHOD_OPTIONS%
+            </select>
+            <label for="speakerDisplayName">Speaker Display Name:</label> <input type="text" id="speakerDisplayName"
+                name="speakerDisplayName" value="%TMPL_SPEAKER_DISPLAY_NAME%">
+            <label for="adhan_url_0adhan_url_0">Fajr mp3 url:</label><input type="text" id="adhan_url_0"
+                name="adhan_url_0" value="%TMPL_ADHAN_URL_1%">
+            <label for="adhan_url_1adhan_url_1">Adhan URL 2:</label><input type="text" id="adhan_url_1"
+                name="adhan_url_1" value="%TMPL_ADHAN_URL_2%">
+            <label for="adhan_url_2adhan_url_2">Adhan URL 3:</label><input type="text" id="adhan_url_2"
+                name="adhan_url_2" value="%TMPL_ADHAN_URL_3%">
+            <label for="adhan_url_3adhan_url_3">Adhan URL 4:</label><input type="text" id="adhan_url_3"
+                name="adhan_url_3" value="%TMPL_ADHAN_URL_4%">
+            <label for="adhan_url_4adhan_url_4">Adhan URL 5:</label><input type="text" id="adhan_url_4"
+                name="adhan_url_4" value="%TMPL_ADHAN_URL_5%">
+            <input type="submit" class="save-restart" value="Save &amp; Restart">
+        </form>
+    </div>
+</body>
+
+</html>

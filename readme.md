@@ -20,11 +20,14 @@ pio run -t upload
 
 1. The ESP32 board will start an Access Point (AP) called `adhan_configurator`. Connect your computer or mobile device to this AP.
 
-1. Open a web browser on your computer or mobile device and navigate to http://adhan.local/home.
+1. Open a web browser on your computer or mobile device and navigate to http://adhan.local.
 
 1. On the web page, configure the WiFi settings for the ESP32 board and hit "Save and Restart".
 
 1. The ESP32 board will now connect to your WiFi network and retrieve the prayer times from the Aladhan API. The adhan will be played using the MP3 files at the appropriate times.
+
+## OTA Updates
+The firmeware now supports over the air updates, more details about it will be added soon
 
 ## License
 

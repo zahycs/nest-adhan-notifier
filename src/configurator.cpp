@@ -1,10 +1,12 @@
-#include <WebServer.h>
 #include <EEPROM.h>
 #include <ESPmDNS.h>
 #include <time.h>
 #include <iostream>
 #include <sstream>
 #include "models.h"
+#include "AsyncTCP.h"
+#include <ESPAsyncWebServer.h>
+#include <SPIFFS.h>
 
 #define EEPROM_SIZE 1024
 
@@ -12,7 +14,6 @@ class Configurator
 {
 private:
     Config config;
-    WebServer server;
     const char ap_ssid[32] = "adhan_configurator";
     const char *host_name = "adhan";
     const char flash_key[16] = "flash";
@@ -22,6 +23,7 @@ private:
     bool playTestAdhan = false;
 
 public:
+    AsyncWebServer server = AsyncWebServer(80);
     void begin()
     {
         EEPROM.begin(EEPROM_SIZE);
@@ -62,11 +64,6 @@ public:
         {
             startSoftAP();
         }
-    }
-
-    void loop()
-    {
-        server.handleClient();
     }
 
     Config getConfig()
@@ -113,20 +110,32 @@ private:
 
     void initServer()
     {
+        if (!SPIFFS.begin(true))
+        {
+            Serial.println("An error has occurred while mounting SPIFFS");
+        }
+
         // Start the server
-        server.on("/home", HTTP_GET, [this]()
-                  { handleRoot(); });
 
-        server.on("/save", HTTP_POST, [this]()
-                  { handleSave(); });
+        // server.on("/", HTTP_GET, [this](AsyncWebServerRequest *request)
+        //          { request->send(200, "text/html", String(buildHomePage())); });
 
-        server.on("/playTest", HTTP_POST, [this]()
-                  { handlePlayTestAdhan(); });
+        server.on("/", HTTP_GET, [this](AsyncWebServerRequest *request)
+                  { request->send(SPIFFS, "/index.html", "text/html", false, [this](const String &var)
+                                  { return processor(var, this); }); });
 
-        server.onNotFound([this]()
-                          { handleNotFound(); });
+        server.serveStatic("/", SPIFFS, "/");
 
-        server.begin();
+        server.on("/save", HTTP_POST, [this](AsyncWebServerRequest *request)
+                  { handleSave(request); });
+
+        server.on("/playTest", HTTP_POST, [this](AsyncWebServerRequest *request)
+                  { handlePlayTestAdhan(request); });
+
+        server.onNotFound([this](AsyncWebServerRequest *request)
+                          { handleNotFound(request); });
+
+        // server.begin();
 
         Serial.println("Web server started");
         Serial.print("Access it at http://");
@@ -213,139 +222,58 @@ private:
             Serial.println("Adhan URL " + String(i + 1) + ": " + String(config.adhan_urls[i]));
         }
     }
-
-    void handleRoot()
+    static String processor(const String &var, const Configurator *configurator)
     {
-        String htmlString = "";
-        try
+        Config config = configurator->config;
+        if (var == "TMPL_SSID")
+            return config.ssid;
+        if (var == "TMPL_PASSWORD")
+            return config.password;
+        if (var == "TMPL_CITY")
+            return config.city;
+        if (var == "TMPL_COUNTRY")
+            return config.country;
+        if (var == "TMPL_METHOD_OPTIONS")
+            return buildMethodOptions(config, configurator->methods_list);
+
+        if (var == "TMPL_SPEAKER_DISPLAY_NAME")
+            return config.speakerDisplayName;
+
+        if (var == "TMPL_ADHAN_URL_1")
+            return config.adhan_urls[0];
+
+        if (var == "TMPL_ADHAN_URL_2")
+            return config.adhan_urls[1];
+
+        if (var == "TMPL_ADHAN_URL_3")
+            return config.adhan_urls[2];
+
+        if (var == "TMPL_ADHAN_URL_4")
+            return config.adhan_urls[3];
+
+        if (var == "TMPL_ADHAN_URL_5")
+            return config.adhan_urls[4];
+
+        if (configurator->prayers != nullptr)
         {
-            htmlString = buildHomePage();
+            if (var == "TMPL_FAJR")
+                return formatTime(configurator->prayers[0]);
+            if (var == "TMPL_DHUHR")
+                return formatTime(configurator->prayers[1]);
+            if (var == "TMPL_ASR")
+                return formatTime(configurator->prayers[2]);
+            if (var == "TMPL_MAGHRIB")
+                return formatTime(configurator->prayers[3]);
+            if (var == "TMPL_ISHA")
+                return formatTime(configurator->prayers[4]);
         }
-        catch (const std::exception &e)
-        {
-            Serial.println(e.what());
-            // create html with error message from the exception
-            htmlString = buildErrorPage(e.what());
-        }
-        server.send(200, "text/html", htmlString);
+
+        return String();
     }
-    String buildHomePage()
+
+    static String buildMethodOptions(const Config &config, const MethodList *methods_list)
     {
         std::stringstream html;
-        html << "<!DOCTYPE html>\n\
-        <html>\n\
-        <head>\n\
-        <title>ESP Adhan Configuration</title>\n\
-        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n\
-        <style>\n\
-            body {\n\
-            font-family: Arial, Helvetica, sans-serif;\n\
-            margin: 0;\n\
-            padding: 0;\n\
-            background-color: #f2f2f2;\n\
-            }\n\
-            .container {\n\
-            width: 90%;\n\
-            margin: auto;\n\
-            background-color: #fff;\n\
-            padding: 20px;\n\
-            border-radius: 10px;\n\
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);\n\
-            }\n\
-            h2 {\n\
-            text-align: center;\n\
-            }\n\
-            form {\n\
-            display: grid;\n\
-            grid-template-columns: 150px 1fr;\n\
-            row-gap: 10px;\n\
-            column-gap: 10px;\n\
-            justify-items: start;\n\
-            }\n\
-            label {\n\
-            font-weight: normal; font-size: 14px;line-height: 50px;\n\
-            }\n\
-            input[type=text],\n\
-            input[type=password] {\n\
-            width: 100%;\n\
-            padding: 12px 20px;\n\
-            margin: 8px 0;\n\
-            display: inline-block;\n\
-            border: 1px solid #ccc;\n\
-            border-radius: 4px;\n\
-            box-sizing: border-box;\n\
-            }\n\
-            select {\n\
-            width: 100%;\n\
-            padding: 12px 20px;\n\
-            margin: 8px 0;\n\
-            display: inline-block;\n\
-            border: 1px solid #ccc;\n\
-            border-radius: 4px;\n\
-            box-sizing: border-box;\n\
-            }\n\
-            .save-restart {\n\
-            float: right;\n\
-            background-color: #4CAF50;\n\
-            color: white;\n\
-            padding: 12px 20px;\n\
-            border: none;\n\
-            border-radius: 4px;\n\
-            cursor: pointer;\n\
-            }\n\
-            .play-test {\n\
-            float: right;\n\
-            background-color: blue;\n\
-            color: white;\n\
-            padding: 12px 20px;\n\
-            border: none;\n\
-            border-radius: 4px;\n\
-            cursor: pointer;\n\
-            }\n\
-            #logo {\n\
-            display: flex;\n\
-            justify-content: center;\n\
-            align-items: center;\n\
-            height: 100px; /* adjust to your preferred size */\n\
-            }\n\
-            #logo img {\n\
-            max-height: 100%;\n\
-            max-width: 100%;\n\
-            }\n\
-        </style>\n\
-        </head>\n\
-        <body>\n\
-        <div class=\"container\">\n\
-        <h2>ESP Adhan Configuration</h2>\n\
-        <div id=\"logo\">\n\
-        <img src=\"https://raw.githubusercontent.com/zahycs/nest-adhan-notifier/main/img/l-1.png\" alt=\"Logo\"></div>\n";
-        // Get prayer times
-        String prayer_times = buildPrayersHtml(prayers);
-        html << prayer_times.c_str();
-        html << "<form action=\"/save\" method=\"post\">\n\
-            <label for=\"ssid\">SSID:</label>\n\
-            <input type=\"text\" id=\"ssid\" name=\"ssid\" value=\"";
-
-        html << config.ssid;
-        html << "\">\n\
-          <label for=\"password\">Password:</label>\n\
-          <input type=\"password\" id=\"password\" name=\"password\" value=\"";
-        html << config.password;
-        html << "\">\n\
-          <label for=\"city\">City:</label>\n\
-          <input type=\"text\" id=\"city\" name=\"city\" value=\"";
-        html << config.city;
-        html << "\">\n\
-          <label for=\"country\">Country:</label>\
-          <input type = \"text\" id = \"country\" name = \"country\" value =\"";
-        html << config.country;
-        html << "\"> \n";
-        // Method
-        html << "<label for=\"method\">Method:</label>";
-        html << "<select id=\"method\" name=\"method\">";
-
-        // loop through methods
-
         if (methods_list != nullptr)
         {
             int numMethods = methods_list->num_methods;
@@ -377,7 +305,6 @@ private:
                 html << "default method";
                 html << "</option>";
             }
-            html << "</select>\n";
         }
         else
         {
@@ -389,111 +316,12 @@ private:
             html << ">";
             html << "default method";
             html << "</option>";
-            html << "</select>\n";
         }
-
-        // API Endpoint
-        // html << "<label for=\"api_endpoint\">API Endpoint:</label>";
-        // html << "<input type=\"text\" id=\"api_endpoint\" name=\"api_endpoint\" value=\"";
-        // html << config.api_endpoint;
-        // html << "\">\n";
-
-        // Speaker Display Name
-        html << "<label for=\"speakerDisplayName\">Speaker Display Name:</label>\
-          <input type = \"text\" id = \"speakerDisplayName\" name = \"speakerDisplayName\" value =\"";
-        html << config.speakerDisplayName;
-        html << "\"> \n";
-
-        // Adhan URLs
-        for (int i = 0; i < 5; i++)
-        {
-            String adhanLabel = "Adhan URL " + String(i + 1) + ":";
-            String adhanInputId = "adhan_url_" + String(i);
-            html << "<label for=\"";
-            html << adhanInputId.c_str();
-            html << adhanInputId.c_str();
-            html << "\">";
-            html << adhanLabel.c_str();
-            html << "</label>";
-            html << "<input type=\"text\" id=\"";
-            html << adhanInputId.c_str();
-            html << "\" name=\"";
-            html << adhanInputId.c_str();
-            html << "\" value=\"";
-            html << config.adhan_urls[i];
-            html << "\">\n";
-        }
-
-        // Save Button
-        html << "<input type=\"submit\" class=\"save-restart\" value=\"Save & Restart\">";
-        html << "</form>";
-        html << "</div></body></html>";
-
         return html.str().c_str();
-    }
-    String buildErrorPage(const char *err)
-    {
-        return "<!DOCTYPE html>\n\
-            <html>\n\
-            <head>\n\
-            <title>ESP Adhan Configuration</title>\n\
-            <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n\
-            <style>\n\
-                body {\n\
-                font-family: Arial, Helvetica, sans-serif;\n\
-                margin: 0;\n\
-                padding: 0;\n\
-                background-color: #f2f2f2;\n\
-                }\n\
-                .container {\n\
-                width: 90%;\n\
-                margin: auto;\n\
-                background-color: #fff;\n\
-                padding: 20px;\n\
-                border-radius: 10px;\n\
-                box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.2);\n\
-                }\n\
-                .error {\n\
-                color: red;\n\
-                }\n\
-            </style>\n\
-            </head>\n\
-            <body>\n\
-            <div class=\"container\">\n\
-            <h1>ESP Adhan Configuration</h1>\n\
-            <p class=\"error\">Error: " +
-               String(err) + "</p>\n\
-            </div>\n\
-            </body>\n\
-            </html>";
-    }
-    String buildPrayersHtml(struct tm prayers[])
-    {
-        if (prayers == nullptr)
-        {
-            return "";
-        }
-        String html = "<div style=\"display: flex; flex-direction: row;\">";
-
-        for (int i = 0; i < 5; i++)
-        {
-            String time_str = formatTime(prayers[i]);
-            String prayer_name = getPrayerName(i);
-
-            String prayer_html = "<div style=\"padding: 5px; margin-right: 10px; background-color: #f2f2f2;\">" + prayer_name + ": " + time_str + "</div>";
-
-            html += prayer_html;
-        }
-        html += "<form action=\"/playTest\" method=\"post\">";
-        html += "<input type=\"submit\" class=\"play-test\" value=\"Play Test\">";
-        html += "</form>";
-        html += "</div><br><br>";
-
-        return html;
     }
 
     // formatTime function takes a tm struct representing a time and returns a formatted string
-    char *formatTime(struct tm time)
+    static char *formatTime(struct tm time)
     {
         static char formattedTime[6];
         sprintf(formattedTime, "%02d:%02d", time.tm_hour, time.tm_min);
@@ -507,22 +335,22 @@ private:
         return prayerNames[index];
     }
 
-    void handleSave()
+    void handleSave(AsyncWebServerRequest *request)
     {
         Serial.println("Saving configs....");
-        String ssid = server.arg("ssid");
-        String password = server.arg("password");
-        String city = server.arg("city");
-        String country = server.arg("country");
-        int method = server.arg("method").toInt();
-        String apiEndpoint = server.arg("api_endpoint");
-        String speakerDisplayName = server.arg("speakerDisplayName");
+        String ssid = request->arg("ssid");
+        String password = request->arg("password");
+        String city = request->arg("city");
+        String country = request->arg("country");
+        int method = request->arg("method").toInt();
+        String apiEndpoint = request->arg("api_endpoint");
+        String speakerDisplayName = request->arg("speakerDisplayName");
         String adhanUrls[5] = {
-            server.arg("adhan_url_0"),
-            server.arg("adhan_url_1"),
-            server.arg("adhan_url_2"),
-            server.arg("adhan_url_3"),
-            server.arg("adhan_url_4")};
+            request->arg("adhan_url_0"),
+            request->arg("adhan_url_1"),
+            request->arg("adhan_url_2"),
+            request->arg("adhan_url_3"),
+            request->arg("adhan_url_4")};
 
         ssid.toCharArray(config.ssid, sizeof(config.ssid));
         password.toCharArray(config.password, sizeof(config.password));
@@ -538,20 +366,24 @@ private:
         Serial.println("Saving config...");
         saveConfig();
 
-        server.sendHeader("Location", "/home", true);
-        server.send(302, "text/plain", "");
+        AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "");
+        response->addHeader("Location", "/");
+        request->send(response);
         // Restart ESP so that the new config is used
         delay(5 * 1000);
         esp_restart();
     }
-    void handlePlayTestAdhan()
+
+    void handlePlayTestAdhan(AsyncWebServerRequest *request)
     {
         playTestAdhan = true;
-        server.sendHeader("Location", "/home", true);
-        server.send(302, "text/plain", "");
+        AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "");
+        response->addHeader("Location", "/");
+        request->send(response);
     }
-    void handleNotFound()
+
+    void handleNotFound(AsyncWebServerRequest *request)
     {
-        server.send(404, "text/plain", "404 Not Found");
+        request->send(404, "text/plain", "404 Not Found");
     }
 };

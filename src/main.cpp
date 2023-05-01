@@ -9,6 +9,7 @@
 #include "configurator.cpp"
 #include <time.h>
 #include <EEPROM.h>
+#include <AsyncElegantOTA.h>
 
 // constants and variables
 const int NUM_PRAYERS = 5;
@@ -31,7 +32,10 @@ void setup()
     Serial.println("");
     Serial.println("Starting ...");
 
+    //
     configurator.begin();
+    AsyncElegantOTA.begin(&configurator.server);
+    configurator.server.begin();
     static bool configSet = false;
     static Config config;
     // wait for the user to submit the config object
@@ -43,7 +47,6 @@ void setup()
         Serial.println("Config set!");
         configSet = true;
       }
-      configurator.loop();
     }
 
     // init time
@@ -152,8 +155,8 @@ void loop()
       playAdhan(0, config.adhan_urls[0]);
       configurator.setPlayTestAdhan(false);
     }
-    configurator.loop();
-    // Wait for 2 seconds before running again
+    // configurator.loop();
+    //  Wait for 2 seconds before running again
     delay(2 * 1000);
   }
   catch (const std::exception &e)
