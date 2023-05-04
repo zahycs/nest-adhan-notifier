@@ -1,87 +1,178 @@
 body {
-    font-family: Arial, Helvetica, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f2f2f2;
+  background-color: #161819;
+  color: #f0f1f3;
+  font-size: 16px;
+  font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
 
-.container {
-    width: 90%;
-    margin: auto;
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+h1, h2 {
+  padding: 0;
+  margin: 0;
+  font-weight: 500;
+}
+
+h1 {
+    font-size: 2rem;
 }
 
 h2 {
+   font-size: 1.5rem;
+}
+
+.wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.tabs {
+  background-color: #1f2123;
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 32px;
+}
+.tabs-list {
+  border-bottom: solid 1px #27292a;
+  margin-top: 16px;
+}
+
+.tabs-list-item {
+  color: inherit;
+  padding: 16px;
+  display: inline-block;
+  text-decoration: none;
+  border-bottom: solid 2px #1f2123;
+  transition: all 0.5s;
+}
+
+.tabs-list-item.active {
+  opacity: 1;
+  border-bottom: solid 2px #c0efcb;
+  color: #c0efcb;
+}
+
+.tabs-content {
+  display: none;
+  padding-top: 16px;
+}
+
+.tabs-content.active {
+  display: block;
+}
+
+.times {
+  display: grid;
+  grid-gap: 8px;
+  grid-auto-flow: column;
+  margin-top: 32px;
+}
+
+.times-item {
+  padding: 16px;
+  background-color: #1f2123;
+  box-sizing: border-box;
+  border-radius: 16px;
+  border: solid 1px #1f2123;
+  display: grid;
+  grid-template-columns: 64px 1fr;
+}   
+
+.times-icon {
+  grid-column: 1 / 2;
+}
+
+.times-title {
+    grid-column: 2 / 2;
+    color: #c0efcb;
+    text-align: end;
+}
+
+.times-content {
+    grid-column: span 2;
     text-align: center;
+    font-weight: bold;
+    padding-top: 8px;
 }
 
-form {
+.play-form {
     display: grid;
-    grid-template-columns: 150px 1fr;
-    row-gap: 10px;
-    column-gap: 10px;
-    justify-items: start;
-}
-
-label {
-    font-weight: normal;
-    font-size: 14px;
-    line-height: 50px;
-}
-
-input[type=text],
-input[type=password] {
-    width: 100%;
-    padding: 12px 20px;
-    margin: 8px 0;
-    display: inline-block;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-}
-
-select {
-    width: 100%;
-    padding: 12px 20px;
-    margin: 8px 0;
-    display: inline-block;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-}
-
-.save-restart {
-    float: right;
-    background-color: #4CAF50;
-    color: white;
-    padding: 12px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.play-test {
-    float: right;
-    background-color: blue;
-    color: white;
-    padding: 12px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-#logo {
-    display: flex;
-    justify-content: center;
+    grid-template-columns: 1fr auto 1fr;
+    grid-gap: 16px;
     align-items: center;
-    height: 100px;
-    /* adjust to your preferred size */
+    margin-top: 32px;
+}
+.play-form input {
+    border: none;
+    padding: 16px;
+    border-radius: 4px;
+    font: inherit;
+    font-weight: bold;
+    background-color: #c0efcb;
+    cursor: pointer;
 }
 
-#logo img {
-    max-height: 100%;
-    max-width: 100%;
+.play-form span {
+    content: "";
+    border-bottom: solid 1px #27292a;
+    width: 100%;
+    display: inline-block;
+}
+.form-submit {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    grid-gap: 16px;
+    align-items: center;
+    margin-top: 32px;
+}
+.form-submit input {
+    border: none;
+    padding: 16px;
+    border-radius: 4px;
+    font: inherit;
+    font-weight: bold;
+    background-color: #fdc087;
+    cursor: pointer;
+}
+
+.form-submit span {
+    content: "";
+    border-bottom: solid 1px #27292a;
+    width: 100%;
+    display: inline-block;
+}
+
+.form-body {
+    display: grid;
+    grid-gap: 16px;
+    grid-template-columns: 1fr;
+    padding: 16px;
+}
+
+.form-row {
+    display: grid;
+    grid-gap: 16px;
+    grid-template-columns: 1fr 4fr;
+}
+
+.form-row label {
+    text-align: end;
+    width: 100%;
+    align-self: center;
+}
+
+.form-row input[type="text"], .form-row input[type="password"] {
+    padding: 16px;
+    border-radius: 8px;
+    background-color: #2a2e31;
+    border: solid 1px #2a2e31;
+    color: #f0f1f3;
+}
+.form-row input[type="text"]:active,
+.form-row input[type="text"]:focus,
+.form-row input[type="password"]:active,
+.form-row input[type="password"]:focus {
+border: solid 1px #c0efcb;
+color: #c0efcb;
+outline: none;
 }
