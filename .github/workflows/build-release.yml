@@ -9,19 +9,10 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-    - name: Set git version
+    - name: Set GIT_VERSION
       run: |
-        revision=""
-        try:
-            revision = (
-                  subprocess.check_output(["git", "describe", "--tags", "--always"], stderr=subprocess.DEVNULL)
-                  .strip()
-                  .decode("utf-8")
-              )
-            print(f"Git version is {revision}")
-               except Exception as e:
-                   print(f"Failed to retrieve git version: {e}")
-            os.environ["GIT_VERSION"] = revision
+          python get_git_version.py
+          echo "::set-env name=GIT_VERSION::$(cat git_version.txt)"
             
     - name: Create build directory
       run: |
