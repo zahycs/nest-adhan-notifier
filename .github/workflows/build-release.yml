@@ -6,6 +6,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      GIT_VERSION: ${{ steps.set_git_version.outputs.GIT_VERSION }}
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -14,10 +16,6 @@ jobs:
       run: |
         python git_rev_macro.py 
         echo "GIT_VERSION=${{ steps.set_git_version.outputs.GIT_VERSION }}" >> $GITHUB_ENV
-    - name: Use GIT_VERSION
-      run: |
-         echo "Git version is ${{ steps.set_git_version.outputs.GIT_VERSION }}"
-    
             
     - name: Create build directory
       run: |
@@ -53,42 +51,42 @@ jobs:
       with:
         name: spiffs
         path: .pio/build/esp32dev/spiffs.bin
-  # release:
-  #   needs: build
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Create Release
-  #       id: create_release
-  #       uses: actions/create-release@v1
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.RELEASETOKEN }}
-  #       with:
-  #         tag_name: ${{ env.GIT_VERSION }}
-  #         release_name: ${{ env.GIT_VERSION }}
-  #         body: |
-  #           This is the ${{ env.GIT_VERSION }} release of my project.
-  #         draft: false
-  #         prerelease: false
-  #         token: ${{ env.GITHUB_TOKEN  }}
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASETOKEN }}
+        with:
+          tag_name: ${{ needs.build.outputs.GIT_VERSION }}
+          release_name: ${{ needs.build.outputs.GIT_VERSION }}
+          body: |
+            This is the ${{ needs.build.outputs.GIT_VERSION }} release of my project.
+          draft: false
+          prerelease: false
+          token: ${{ env.GITHUB_TOKEN  }}
 
 
-      # - name: Upload Firmware
-      #   id: upload_firmware
-      #   uses: actions/upload-release-asset@v1
-      #   with:
-      #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-      #     asset_path: .pio/build/esp32dev/firmware.bin
-      #     asset_name: firmware.bin
-      #     asset_content_type: application/octet-stream
-      #     token: ${{ secrets.RELEASETOKEN }}
+      - name: Upload Firmware
+        id: upload_firmware
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: .pio/build/esp32dev/firmware.bin
+          asset_name: firmware.bin
+          asset_content_type: application/octet-stream
+          token: ${{ secrets.RELEASETOKEN }}
 
-      # - name: Upload SPIFFS
-      #   id: upload_spiffs
-      #   uses: actions/upload-release-asset@v1
-      #   with:
-      #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-      #     asset_path: .pio/build/esp32dev/spiffs.bin
-      #     asset_name: spiffs.bin
-      #     asset_content_type: application/octet-stream
-      #     token: ${{ secrets.RELEASETOKEN }}
+      - name: Upload SPIFFS
+        id: upload_spiffs
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: .pio/build/esp32dev/spiffs.bin
+          asset_name: spiffs.bin
+          asset_content_type: application/octet-stream
+          token: ${{ secrets.RELEASETOKEN }}
 
