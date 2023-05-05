@@ -1,5 +1,5 @@
 import subprocess
-
+import os
 revision = ""
 try:
     revision = (
@@ -11,4 +11,6 @@ except:
     pass
 
 print("-DGIT_VERSION='\"%s\"'" % revision)
-print(f"::set-output name=GIT_VERSION::{revision}")
+with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+    f.write(f"GIT_VERSION={revision}\n")
+
