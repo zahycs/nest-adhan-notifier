@@ -55,10 +55,11 @@ jobs:
           tag_name: v1.0.0  # Replace with your desired tag name
           release_name: Release v1.0.0  # Replace with your desired release name
           body: |
-            This is the first release of my project.
+             This is the first release of my project.
           draft: false
           prerelease: false
           token: ${{ secrets.RELEASETOKEN }}
+
 
       - name: Upload Firmware
         id: upload_firmware
