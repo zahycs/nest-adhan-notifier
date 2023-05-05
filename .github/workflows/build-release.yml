@@ -9,6 +9,10 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
+    - name: Set version as environment variable
+      run: |
+          revision=$(git describe --tags --always)
+          echo "export VERSION=$revision" >> $GITHUB_ENV
     - name: Create build directory
       run: |
           mkdir -p build
@@ -54,10 +58,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASETOKEN }}
         with:
-          tag_name: v1.0.0  # Replace with your desired tag name
-          release_name: Release v1.0.0  # Replace with your desired release name
+          tag_name: ${{ env.VERSION }}
+          release_name: Release ${{ env.VERSION }}
           body: |
-             This is the first release of my project.
+            This is the ${{ env.VERSION }} release of my project.
           draft: false
           prerelease: false
           token: ${{ env.GITHUB_TOKEN  }}
