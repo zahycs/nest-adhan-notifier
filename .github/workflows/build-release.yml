@@ -8,6 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       GIT_VERSION: ${{ steps.set_git_version.outputs.GIT_VERSION }}
+      firmware_path: .pio/build/esp32dev/firmware.bin
+      spiffs_path: .pio/build/esp32dev/spiffs.bin
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -45,16 +47,27 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: firmware
-        path: .pio/build/esp32dev/firmware.bin
+        path: ${{ needs.build.outputs.firmware_path }}
     - name: Upload spiffs.bin
       uses: actions/upload-artifact@v2
       with:
         name: spiffs
-        path: .pio/build/esp32dev/spiffs.bin
+        path: ${{ needs.build.outputs.spiffs_path }}
+
   release:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Download firmware.bin and spiffs.bin
+        uses: actions/download-artifact@v2
+        with:
+          name: firmware
+      - name: Download spiffs.bin
+        uses: actions/download-artifact@v2
+        with:
+          name: spiffs
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -69,13 +82,12 @@ jobs:
           prerelease: false
           token: ${{ env.GITHUB_TOKEN  }}
 
-
       - name: Upload Firmware
         id: upload_firmware
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: .pio/build/esp32dev/firmware.bin
+          asset_path: firmware.bin
           asset_name: firmware.bin
           asset_content_type: application/octet-stream
           token: ${{ secrets.RELEASETOKEN }}
@@ -85,7 +97,7 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: .pio/build/esp32dev/spiffs.bin
+          asset_path: spiffs.bin
           asset_name: spiffs.bin
           asset_content_type: application/octet-stream
           token: ${{ secrets.RELEASETOKEN }}
