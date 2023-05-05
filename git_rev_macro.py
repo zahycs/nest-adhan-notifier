@@ -1,4 +1,5 @@
 import subprocess
+import os
 
 revision = ""
 try:
@@ -9,5 +10,5 @@ try:
     )
 except:
     pass
-
+os.environ["GIT_VERSION"] = revision
 print("-DGIT_VERSION='\"%s\"'" % revision)
