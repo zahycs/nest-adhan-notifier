@@ -11,4 +11,4 @@ except:
     pass
 
 print("-DGIT_VERSION='\"%s\"'" % revision)
-print(f"::set-env name=GIT_VERSION::{revision}")
+print(f"::set-output name=GIT_VERSION::{revision}")

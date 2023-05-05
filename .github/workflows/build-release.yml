@@ -11,8 +11,11 @@ jobs:
       uses: actions/checkout@v2
     - name: Set GIT_VERSION
       run: |
-          python git_rev_macro.py
-          echo "Git version is ${{ env.GIT_VERSION }}"
+        git_rev_macro.py
+        echo "::set-env name=GIT_VERSION::${{ steps.set_git_version.outputs.GIT_VERSION }}"
+    - name: Use GIT_VERSION
+      run: |
+        echo "Git version is ${{ env.GIT_VERSION }}"
             
     - name: Create build directory
       run: |
