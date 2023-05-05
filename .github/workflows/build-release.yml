@@ -68,7 +68,7 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ github.workspace }}/.pio/build/esp32dev/firmware.bin
+          asset_path: .pio/build/esp32dev/firmware.bin
           asset_name: firmware.bin
           asset_content_type: application/octet-stream
           token: ${{ secrets.RELEASETOKEN }}
@@ -78,7 +78,7 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ github.workspace }}/.pio/build/esp32dev/spiffs.bin
+          asset_path: .pio/build/esp32dev/spiffs.bin
           asset_name: spiffs.bin
           asset_content_type: application/octet-stream
           token: ${{ secrets.RELEASETOKEN }}
