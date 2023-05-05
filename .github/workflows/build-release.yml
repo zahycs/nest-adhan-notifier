@@ -12,7 +12,7 @@ jobs:
     - name: Set GIT_VERSION
       run: |
           python git_rev_macro.py
-          echo "::set-env name=GIT_VERSION::$(cat git_version.txt)"
+          echo "Git version is ${{ env.GIT_VERSION }}"
             
     - name: Create build directory
       run: |
@@ -37,7 +37,7 @@ jobs:
       run: |
         platformio run --target buildfs
         platformio run  
-        echo "Git version is ${{ env.GIT_VERSION }}"
+
     - name: Upload firmware.bin
       uses: actions/upload-artifact@v2
       with:
