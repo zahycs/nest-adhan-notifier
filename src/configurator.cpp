@@ -9,7 +9,9 @@
 #include <SPIFFS.h>
 
 #define EEPROM_SIZE 1024
-
+#ifndef GIT_VERSION
+#define GIT_VERSION "1.0.0"
+#endif
 class Configurator
 {
 private:
@@ -21,6 +23,7 @@ private:
     // array of methods struct
     MethodList *methods_list;
     bool playTestAdhan = false;
+    const char *git_version = GIT_VERSION;
 
 public:
     AsyncWebServer server = AsyncWebServer(80);
@@ -53,9 +56,6 @@ public:
             else // if WiFi is connected
             {
                 Serial.println("WiFi connected");
-
-                initMDNS();
-                initServer();
             }
             Serial.print("IP address: ");
             Serial.println(WiFi.localIP()); // Print the local IP
@@ -64,6 +64,8 @@ public:
         {
             startSoftAP();
         }
+        initMDNS();
+        initServer();
     }
 
     Config getConfig()
@@ -103,9 +105,6 @@ private:
         IPAddress IP = WiFi.softAPIP();
         Serial.print("AP IP address: ");
         Serial.println(IP);
-
-        initMDNS();
-        initServer();
     }
 
     void initServer()
@@ -114,11 +113,6 @@ private:
         {
             Serial.println("An error has occurred while mounting SPIFFS");
         }
-
-        // Start the server
-
-        // server.on("/", HTTP_GET, [this](AsyncWebServerRequest *request)
-        //          { request->send(200, "text/html", String(buildHomePage())); });
 
         server.on("/", HTTP_GET, [this](AsyncWebServerRequest *request)
                   { request->send(SPIFFS, "/index.html", "text/html", false, [this](const String &var)
@@ -135,12 +129,10 @@ private:
         server.onNotFound([this](AsyncWebServerRequest *request)
                           { handleNotFound(request); });
 
-        // server.begin();
-
         Serial.println("Web server started");
         Serial.print("Access it at http://");
         Serial.print(host_name);
-        Serial.println(".local/home");
+        Serial.println(".local");
     }
 
     void initMDNS()
@@ -225,6 +217,8 @@ private:
     static String processor(const String &var, const Configurator *configurator)
     {
         Config config = configurator->config;
+        if (var == "TMPL_VERSION")
+            return configurator->git_version;
         if (var == "TMPL_SSID")
             return config.ssid;
         if (var == "TMPL_PASSWORD")

@@ -176,3 +176,11 @@ border: solid 1px #c0efcb;
 color: #c0efcb;
 outline: none;
 }
+.float-right {
+  float: right;
+}
+h5 {
+  font-size: 0.6rem;
+  letter-spacing: -.05rem;
+  line-height: 1.5;
+}
