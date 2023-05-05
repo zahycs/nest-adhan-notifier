@@ -58,8 +58,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASETOKEN }}
         with:
-          tag_name: ${{ env.GIT_VERSION }}
-          release_name: Release ${{ env.GIT_VERSION }}
+          tag_name: 1.1.0.15
+          release_name: 1.1.0.15
           body: |
             This is the ${{ env.GIT_VERSION }} release of my project.
           draft: false
