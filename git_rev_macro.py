@@ -9,7 +9,7 @@ try:
     )
 except:
     pass
-
+os.environ['GITHUB_OUTPUT'] = 'output.txt'
 print("-DGIT_VERSION='\"%s\"'" % revision)
 with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
     f.write(f"GIT_VERSION={revision}\n")
