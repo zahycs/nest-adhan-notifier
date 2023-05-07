@@ -8,9 +8,9 @@ try:
         .decode("utf-8")
     )
 except:
-    pass
-os.environ['GITHUB_OUTPUT'] = 'output.txt'
+    pass 
+
 print("-DGIT_VERSION='\"%s\"'" % revision)
-with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-    f.write(f"GIT_VERSION={revision}\n")
+# Set the GIT_VERSION environment variable
+print(f"::set-env name=GIT_VERSION::{revision}")
 

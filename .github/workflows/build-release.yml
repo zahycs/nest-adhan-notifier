@@ -13,7 +13,7 @@ jobs:
       id: set_git_version
       run: |
         python git_rev_macro.py 
-        echo "GIT_VERSION=${{ steps.set_git_version.outputs.GIT_VERSION }}" >> $GITHUB_ENV
+        echo "GIT_VERSION=${{ env.GIT_VERSION }}" >> $GITHUB_ENV
             
     - name: Create build directory
       run: |
