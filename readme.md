@@ -4,7 +4,7 @@ This project uses an ESP32 microcontroller to retrieve and play Islamic prayer t
 
 ## Usage
 
-1. To use this project, follow these steps:
+To use this project, follow these steps:
 
 1. Install the Visual Studio Code editor on your computer.
 
