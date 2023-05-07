@@ -4,7 +4,7 @@ This project uses an ESP32 microcontroller to retrieve and play Islamic prayer t
 
 ## Usage
 
-1. To use this project, follow these steps:
+To use this project, follow these steps:
 
 1. Install the Visual Studio Code editor on your computer.
 
@@ -14,9 +14,9 @@ This project uses an ESP32 microcontroller to retrieve and play Islamic prayer t
 
 1. Build and upload the project to your ESP32 board by running the following command in the terminal of Visual Studio Code:
     ```
-    pio run -t upload
+    pio run -t upload -t uploadfs
     ```
-1. After uploading the firmware to the ESP32 board, power it on and wait a few seconds.
+1. After uploading the firmware and system files to the ESP32 board, power it on and wait a few seconds.
 
 1. The ESP32 board will start an Access Point (AP) called `adhan_configurator`. Connect your computer or mobile device to this AP.
 
