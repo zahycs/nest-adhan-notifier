@@ -34,7 +34,7 @@ Note that the screenshot shown above is for reference only and may not exactly m
 ## OTA Updates
 The firmware now includes support for over-the-air (OTA) updates, allowing users to update their devices remotely without needing physical access or a direct connection to a computer.
 
-To perform an OTA update, you need to download the latest firmware.bin and spiffs.bin files from the latest release on this repository. You can find the latest release by navigating to the "Releases" tab on the repository page. Once you have downloaded the files, you need to upload them to the device using the OTA update page.
+To perform an OTA update, you need to download the latest `firmware.bin` and `spiffs.bin` files from the latest release on this repository. You can find the latest release by navigating to the "Releases" tab on the repository page. Once you have downloaded the files, you need to upload them to the device using the OTA update page.
 
 To access the OTA update page, navigate to the IP address associated with your device and append "/update" to the URL. For example, if the device's IP address is 192.168.1.100, the OTA update URL would be http://192.168.1.100/update.
 
