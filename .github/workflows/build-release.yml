@@ -56,10 +56,10 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASETOKEN }}
       with:
-        tag_name: ${{ steps.set_git_version.outputs.GIT_VERSION }}
-        release_name: ${{ steps.set_git_version.outputs.GIT_VERSION }}
+        tag_name: ${{ env.GIT_VERSION }}"
+        release_name: ${{ env.GIT_VERSION }}"
         body: |
-          This is the ${{ steps.set_git_version.outputs.GIT_VERSION }} release of my project.
+          This is the ${{ env.GIT_VERSION }}" release of my project.
         draft: false
         prerelease: false
         token: ${{ env.GITHUB_TOKEN }}

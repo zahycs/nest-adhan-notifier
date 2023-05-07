@@ -12,5 +12,7 @@ except:
 
 print("-DGIT_VERSION='\"%s\"'" % revision)
 # Set the GIT_VERSION environment variable
-print(f"::set-env name=GIT_VERSION::{revision}")
+# Set the GIT_VERSION environment variable
+with open(os.environ['GITHUB_ENV'], 'a') as f:
+    f.write(f"GIT_VERSION={revision}\n")
 
