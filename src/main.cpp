@@ -122,21 +122,16 @@ void loop()
     int now_min = local_time->tm_min;
     printLocalTime(local_time);
 
-    // Call the API once a day
+    // Call the API once a day, restarting the device will take care of that
     if (now_hour == 1 && now_min == 1)
     {
       try
       {
-        // Set prayer times by calling the API
-        setPrayerTimes(config.city, config.country, config.method);
-        Serial.println("Prayer times have been updated for today");
-        adhanPlayer.sendNotification("Prayer times have been successfully updated for today");
-        // Wait for a minute before running again
-        delay(60 * 1000);
+        esp_restart();
       }
       catch (const std::exception &e)
       {
-        Serial.println(" Error setting prayer times, " + String(e.what()));
+        Serial.println(" Error restarting the device " + String(e.what()));
       }
     }
     config = configurator.getConfig();
