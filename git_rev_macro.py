@@ -1,5 +1,7 @@
 import subprocess
 import os
+
+# Get the git revision
 revision = ""
 try:
     revision = (
@@ -8,11 +10,16 @@ try:
         .decode("utf-8")
     )
 except:
-    pass 
+    pass
 
 print("-DGIT_VERSION='\"%s\"'" % revision)
-# Set the GIT_VERSION environment variable
-# Set the GIT_VERSION environment variable
-with open(os.environ['GITHUB_ENV'], 'a') as f:
-    f.write(f"GIT_VERSION={revision}\n")
 
+# Check if the script is running on GitHub Actions
+if 'GITHUB_ENV' in os.environ:
+    # Set the GIT_VERSION environment variable for GitHub Actions
+    with open(os.environ['GITHUB_ENV'], 'a') as f:
+        f.write(f"GIT_VERSION={revision}\n")
+else:
+    # Set the GIT_VERSION environment variable for local builds
+    with open('.env', 'a') as f:
+        f.write(f"GIT_VERSION={revision}\n")

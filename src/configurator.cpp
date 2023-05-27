@@ -12,6 +12,12 @@
 #ifndef GIT_VERSION
 #define GIT_VERSION "1.0.0"
 #endif
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+#define GIT_VERSION_STR TOSTRING(GIT_VERSION)
+
+
+
 class Configurator
 {
 private:
@@ -23,7 +29,7 @@ private:
     // array of methods struct
     MethodList *methods_list;
     bool playTestAdhan = false;
-    const char *git_version = GIT_VERSION;
+    const char *git_version = GIT_VERSION_STR;
 
 public:
     AsyncWebServer server = AsyncWebServer(80);

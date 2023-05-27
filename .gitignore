@@ -36,3 +36,4 @@
 # misc
 .pio
 output.txt
+.env
