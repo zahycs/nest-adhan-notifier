@@ -127,6 +127,8 @@ void loop()
     {
       try
       {
+        // a bit of delay to prevent rerestarting
+        delay(120 * 1000);
         esp_restart();
       }
       catch (const std::exception &e)
