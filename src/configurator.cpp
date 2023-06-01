@@ -30,6 +30,7 @@ private:
     MethodList *methods_list;
     bool playTestAdhan = false;
     const char *git_version = GIT_VERSION_STR;
+    unsigned long apStartTime = 0;
 
 public:
     AsyncWebServer server = AsyncWebServer(80);
