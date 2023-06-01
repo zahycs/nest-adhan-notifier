@@ -16,8 +16,6 @@
 #define TOSTRING(x) STRINGIFY(x)
 #define GIT_VERSION_STR TOSTRING(GIT_VERSION)
 
-
-
 class Configurator
 {
 private:
@@ -30,8 +28,6 @@ private:
     MethodList *methods_list;
     bool playTestAdhan = false;
     const char *git_version = GIT_VERSION_STR;
-    unsigned long apStartTime = 0;
-
 public:
     AsyncWebServer server = AsyncWebServer(80);
     void begin()
@@ -57,8 +53,16 @@ public:
             }
             if (WiFi.status() != WL_CONNECTED) // if connection attempt exceeded 1 minute
             {
-                WiFi.disconnect(); // disconnect from WiFi
-                startSoftAP();     // start SoftAP
+                WiFi.disconnect();                    // disconnect from WiFi
+                startSoftAP();                        // start SoftAP
+                unsigned long apStartTime = millis(); // store the AP start time
+
+                while ((millis() - apStartTime) < 180000) // wait for 3 minutes in AP mode
+                {
+                    delay(1000);
+                }
+
+                ESP.restart(); // restart the ESP32
             }
             else // if WiFi is connected
             {

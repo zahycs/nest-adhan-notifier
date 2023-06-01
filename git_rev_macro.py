@@ -1,5 +1,6 @@
 import subprocess
 import os
+import re
 
 # Get the git revision
 revision = ""
@@ -9,6 +10,14 @@ try:
         .strip()
         .decode("utf-8")
     )
+
+    # Extract the semantic version from the git revision
+    match = re.match(r"v?(\d+\.\d+\.\d+)", revision)
+    if match:
+        revision = match.group(1)
+    else:
+        revision = ""
+
 except:
     pass
 
