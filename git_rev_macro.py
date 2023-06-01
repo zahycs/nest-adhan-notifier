@@ -16,10 +16,12 @@ try:
     if match:
         revision = match.group(1)
     else:
-        revision = ""
+        # Use a placeholder version if a valid semantic version is not available
+        revision = "0.0.0"
 
 except:
-    pass
+    # Use a placeholder version if an error occurs
+    revision = "0.0.0"
 
 print("-DGIT_VERSION='\"%s\"'" % revision)
 
