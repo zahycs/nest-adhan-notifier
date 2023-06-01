@@ -1,6 +1,5 @@
 import subprocess
 import os
-import re
 
 # Get the git revision
 revision = ""
@@ -10,18 +9,8 @@ try:
         .strip()
         .decode("utf-8")
     )
-
-    # Extract the semantic version from the git revision
-    match = re.match(r"v?(\d+\.\d+\.\d+)", revision)
-    if match:
-        revision = match.group(1)
-    else:
-        # Use a placeholder version if a valid semantic version is not available
-        revision = "0.0.0"
-
 except:
-    # Use a placeholder version if an error occurs
-    revision = "0.0.0"
+    pass
 
 print("-DGIT_VERSION='\"%s\"'" % revision)
 
