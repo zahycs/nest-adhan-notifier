@@ -54,7 +54,10 @@ public:
             if (WiFi.status() != WL_CONNECTED) // if connection attempt exceeded 1 minute
             {
                 WiFi.disconnect();                    // disconnect from WiFi
-                startSoftAP();                        // start SoftAP
+                startSoftAP();                        
+                initMDNS();
+                initServer(); 
+                server.begin();                       // start the web server                       
                 unsigned long apStartTime = millis(); // store the AP start time
 
                 while ((millis() - apStartTime) < 180000) // wait for 3 minutes in AP mode
@@ -172,7 +175,10 @@ private:
                 "https://www.islamcan.com/audio/adhan/azan2.mp3",
                 "https://www.islamcan.com/audio/adhan/azan20.mp3",
                 "https://www.islamcan.com/audio/adhan/azan16.mp3",
-                "https://www.islamcan.com/audio/adhan/azan14.mp3"};
+                "https://www.islamcan.com/audio/adhan/azan14.mp3",
+                "http://n09.radiojar.com/8s5u5tpdtwzuv?rj-ttl=5&rj-tok=AAABiVyBukIAsqq5rspqjgmmOA"
+                //"https://stream.radioendirect.net/8945"
+                };
 
             strcpy(config.ssid, "wifi ssid here");
 
@@ -195,6 +201,8 @@ private:
             strcpy(config.adhan_urls[3], default_mp3Urls[3]);
 
             strcpy(config.adhan_urls[4], default_mp3Urls[4]);
+
+            strcpy(config.adhan_urls[5], default_mp3Urls[5]);
         }
         else
         {
@@ -220,7 +228,7 @@ private:
         Serial.println("Country: " + String(config.country));
         Serial.println("Method: " + String(config.method));
         Serial.println("Speaker Display Name: " + String(config.speakerDisplayName));
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 6; i++)
         {
             Serial.println("Adhan URL " + String(i + 1) + ": " + String(config.adhan_urls[i]));
         }

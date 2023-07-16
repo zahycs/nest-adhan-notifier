@@ -1,4 +1,5 @@
 #include <HTTPClient.h>
+#include <WiFiClientSecure.h>
 #include <ArduinoJson.h>
 #include <ArduinoJson.hpp>
 #include "models.h"
@@ -6,6 +7,7 @@
 class PrayerApiClient
 {
 private:
+  WiFiClientSecure client;
   HTTPClient httpClient;
   const int num_prayers = 5;
 
@@ -31,12 +33,11 @@ private:
 
     return prayer_times;
   }
+  
   String getRequest(String url)
   {
-    // Set the headers
-    httpClient.addHeader("Host", "api.aladhan.com");
+    // Add the necessary headers
     httpClient.addHeader("Accept", "application/json");
-    httpClient.addHeader("Content-Type", "application/json");
     httpClient.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
     int retryCount = 0;
 
@@ -44,7 +45,7 @@ private:
     {
       retryCount++;
       // Send the HTTP GET request
-      httpClient.begin(url);
+      httpClient.begin(client, url);  // Using the secured client
       int statusCode = httpClient.GET();
 
       // Check the response status code
@@ -70,6 +71,11 @@ private:
   }
 
 public:
+  PrayerApiClient()
+  {
+    client.setInsecure();  // Ignore SSL certificate errors
+  }
+
   struct tm *getPrayerTimes(String city, String country, int method)
   {
     String url = "https://api.aladhan.com/v1/timingsByCity?city=" + city + "&country=" + country + "&method=" + String(method);
@@ -87,7 +93,7 @@ public:
   MethodList *getMethods()
   {
     Serial.println("Getting calculation methods...");
-    String url = "http://api.aladhan.com/v1/methods";
+    String url = "https://api.aladhan.com/v1/methods";  // HTTPS is used here
     String response = getRequest(url);
     if (response.isEmpty())
     {

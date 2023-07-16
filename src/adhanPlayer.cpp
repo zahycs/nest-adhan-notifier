@@ -7,11 +7,19 @@ private:
   const char *prayerNames[5] = {"Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"};
 
 public:
-  void playAdhan(int prayer, char *mp3Url)
-  { 
-    // Notify the name of the prayer
-    String notification = "It's time for " + String(prayerNames[prayer]) + " prayer";
-    sendNotification(notification.c_str());
+  void playAdhan(int prayer, char *mp3Url, char *notification=NULL)
+  {
+    if (notification != NULL)
+    {
+      sendNotification(notification);
+    }
+    else
+    {
+      // Notify the name of the prayer
+      String prayer_notification = "It's time for " + String(prayerNames[prayer]) + " prayer";
+      sendNotification(prayer_notification.c_str());
+    }
+
     // give a chance to the announcement to play
     delay(3 * 1000);
     // Play the MP3
@@ -47,7 +55,7 @@ public:
         delay(1000);
       }
     }
-     
+
     Serial.print("found Google Home(");
     Serial.print(ghn.getIPAddress());
     Serial.print(":");

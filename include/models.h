@@ -22,6 +22,6 @@ struct Config
     // method is to be selected from a dropdown list, with id and method name 
     int method; 
     char speakerDisplayName[32];
-    char adhan_urls[5][120];
+    char adhan_urls[6][120];
 };
 #endif

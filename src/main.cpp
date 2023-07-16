@@ -98,11 +98,11 @@ void printLocalTime(struct tm *local_time)
   Serial.print(local_time->tm_sec); // print second
   Serial.println();
 }
-void playAdhan(int prayer_index, char *adhan_url)
+void playAdhan(int prayer_index, char *adhan_url, char *notification=NULL)
 {
   try
   {
-    adhanPlayer.playAdhan(prayer_index, adhan_url);
+    adhanPlayer.playAdhan(prayer_index, adhan_url, notification);
     // Wait for a minute before running again
     delay(60 * 1000);
   }
@@ -143,13 +143,13 @@ void loop()
 
       if (now_hour == prayer_times[i].tm_hour && now_min == prayer_times[i].tm_min)
       {
-        playAdhan(i, config.adhan_urls[i]);
+        playAdhan(i, config.adhan_urls[i],NULL);
       }
     }
     // Check if the user wants to play a test adhan
     if (configurator.isPlayTestAdhan())
     {
-      playAdhan(0, config.adhan_urls[0]);
+      playAdhan(-1, config.adhan_urls[5], "Quran Radio");
       configurator.setPlayTestAdhan(false);
     }
     // configurator.loop();
