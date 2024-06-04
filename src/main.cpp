@@ -1,22 +1,23 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include <ArduinoJson.hpp>
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <esp8266-google-home-notifier.h>
 #include "adhanPlayer.cpp"
-#include "prayerApiClient.cpp"
+#include "aladhanPrayerTimes.cpp"
 #include "configurator.cpp"
 #include <time.h>
 #include <EEPROM.h>
 #include <AsyncElegantOTA.h>
+#include "PrayerTimesInterface.h"
+#include "mawaqitPrayerTimes.cpp"
 
 // constants and variables
 const int NUM_PRAYERS = 5;
 struct tm *prayer_times = new tm[NUM_PRAYERS];
 
 AdhanPlayer adhanPlayer;
-PrayerApiClient prayerClient;
+PrayerTimesInterface* prayerClient;
 Configurator configurator;
 Config config;
 
@@ -26,6 +27,12 @@ void playAdhan(int prayer_index, char *adhan_url);
 
 void setup()
 {
+  // Initialize the prayer client
+  // add your mosqueId, mawaqitUsername, and mawaqitPassword
+  prayerClient = new MawaqitPrayerTimes(
+    "mosqueId",
+    "mawaqitUsername",
+    "mawaqitPassword");
   try
   {
     Serial.begin(115200);
@@ -68,8 +75,8 @@ void setup()
 void setPrayerTimes(String city, String country, int method)
 {
   // Call the API and parse the JSON response
-  MethodList *methods_list = prayerClient.getMethods();
-  struct tm *response = prayerClient.getPrayerTimes(city, country, method);
+  MethodList *methods_list = prayerClient->getMethods();
+  struct tm *response = prayerClient->getPrayerTimes(city, country, method);
   if (response != nullptr)
   {
     prayer_times = response;

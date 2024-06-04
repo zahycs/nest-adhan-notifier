@@ -3,8 +3,9 @@
 #include <ArduinoJson.h>
 #include <ArduinoJson.hpp>
 #include "models.h"
+#include "PrayerTimesInterface.h"
 
-class PrayerApiClient
+class AladhanPrayerTimes : public PrayerTimesInterface
 {
 private:
   WiFiClientSecure client;
@@ -71,12 +72,12 @@ private:
   }
 
 public:
-  PrayerApiClient()
+  AladhanPrayerTimes()
   {
     client.setInsecure();  // Ignore SSL certificate errors
   }
 
-  struct tm *getPrayerTimes(String city, String country, int method)
+  struct tm *getPrayerTimes(String city, String country, int method) override
   {
     String url = "https://api.aladhan.com/v1/timingsByCity?city=" + city + "&country=" + country + "&method=" + String(method);
     Serial.println("endpoint: " + String(url));
@@ -90,48 +91,43 @@ public:
     return getLocalPrayerTimes(response);
   }
 
-  MethodList *getMethods()
-  {
-    Serial.println("Getting calculation methods...");
-    String url = "https://api.aladhan.com/v1/methods";  // HTTPS is used here
-    String response = getRequest(url);
-    if (response.isEmpty())
-    {
-      Serial.println("Failed to get the methods");
-      return nullptr;
-    }
-    else
-    {
-      Serial.println(response);
-    }
+    MethodList* getMethods() override {
+        Serial.println("Getting calculation methods...");
+        String url = "https://api.aladhan.com/v1/methods";
+        String response = getRequest(url);
+        if (response.isEmpty()) {
+            Serial.println("Failed to get the methods");
+            return nullptr;
+        }
 
-    // map the response to a struct
-    DynamicJsonDocument doc(2048);
-    deserializeJson(doc, response);
+        // Deserialize the JSON response
+        DynamicJsonDocument doc(2048);
+        DeserializationError error = deserializeJson(doc, response);
+        if (error) {
+            Serial.print("Failed to parse JSON: ");
+            Serial.println(error.c_str());
+            return nullptr;
+        }
 
-    JsonObject data = doc["data"];
-    int num_responses = data.size(); // Get the number of responses in the data object
-    Method *methods = new Method[num_responses];
-    int i = 0;
-    Serial.println("Number of methods: " + String(num_responses));
+        JsonObject data = doc["data"];
+        int num_responses = data.size();
+        Method* methods = new Method[num_responses];
+        int i = 0;
+        Serial.println("Number of methods: " + String(num_responses));
 
-    for (ArduinoJson::V6212PB::JsonObject::iterator it = data.begin(); it != data.end(); ++it)
-    {
-      String key = it->key().c_str();
-      Serial.println("Method: " + key);
-      JsonObject methodJson = it->value();
-      int id = methodJson["id"].as<int>();
-      String name = methodJson["name"].as<String>();
-      
-      methods[i].id = id;
-      methods[i].display_name = name;
-      Serial.println("Method: " + String(id) + " " + name); 
-      i++;
+        // Use a range-based for loop
+        for (JsonPair kv : data) {
+            JsonObject methodJson = kv.value().as<JsonObject>();
+            methods[i].id = methodJson["id"].as<int>();
+            methods[i].display_name = methodJson["name"].as<String>();
+            Serial.println("Method: " + String(methods[i].id) + " " + methods[i].display_name);
+            i++;
+        }
+
+        // Return the array of method struct
+        MethodList* methodList = new MethodList();
+        methodList->methods = methods;
+        methodList->num_methods = num_responses;
+        return methodList;
     }
-    // Return the array of method struct
-    MethodList *methodList = new MethodList();
-    methodList->methods = methods;
-    methodList->num_methods = num_responses;
-    return methodList;
-  }
 };
