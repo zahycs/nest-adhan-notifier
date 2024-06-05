@@ -28,11 +28,8 @@ void playAdhan(int prayer_index, char *adhan_url);
 void setup()
 {
   // Initialize the prayer client
-  // add your mosqueId, mawaqitUsername, and mawaqitPassword
-  prayerClient = new MawaqitPrayerTimes(
-    "mosqueId",
-    "mawaqitUsername",
-    "mawaqitPassword");
+  // add your mosqueId
+  prayerClient = new MawaqitPrayerTimes("your mosqueId here");
   try
   {
     Serial.begin(115200);

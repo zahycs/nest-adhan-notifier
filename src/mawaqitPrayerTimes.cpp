@@ -11,9 +11,6 @@ private:
     WiFiClientSecure client;
     HTTPClient httpClient;
     String mosqueId;
-    String username;
-    String password;
-    String apiAccessToken;
     const int num_prayers = 5;
 
     struct tm* getLocalPrayerTimes(String json) {
@@ -38,13 +35,8 @@ private:
     }
 
     String getRequest(String url) {
-        if (apiAccessToken.isEmpty() && !obtainAccessToken()) {
-            Serial.println("Failed to obtain access token");
-            return "";
-        }
 
         httpClient.begin(client, url);
-        httpClient.addHeader("api-access-token", apiAccessToken);
         httpClient.addHeader("Accept", "application/json");
 
         int statusCode = httpClient.GET();
@@ -59,39 +51,10 @@ private:
         }
     }
 
-    bool obtainAccessToken() {
-        if (!client.connect("mawaqit.net", 443)) {
-            Serial.println("Connection failed");
-            return false;
-        }
-
-        String auth = base64::encode(username + ":" + password);
-        String url = "https://mawaqit.net/api/2.0/me";
-
-        httpClient.begin(client, url);
-        httpClient.addHeader("Authorization", "Basic " + auth);
-        httpClient.addHeader("Accept", "application/json");
-        int statusCode = httpClient.GET();
-
-        if (statusCode == HTTP_CODE_OK) {
-            String response = httpClient.getString();
-            httpClient.end();
-
-            DynamicJsonDocument doc(1024);
-            deserializeJson(doc, response);
-            apiAccessToken = doc["apiAccessToken"].as<String>();
-            Serial.println("API access token obtained: " + apiAccessToken);
-            return true;
-        } else {
-            Serial.println("Failed to obtain API access token, statusCode: " + String(statusCode));
-            httpClient.end();
-            return false;
-        }
-    }
 
 public:
-    MawaqitPrayerTimes(String mosqueId, String username, String password)
-        : mosqueId(mosqueId), username(username), password(password) {
+    MawaqitPrayerTimes(String mosqueId)
+        : mosqueId(mosqueId) {
         client.setInsecure(); // Ignore SSL certificate errors
     }
 
