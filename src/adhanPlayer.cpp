@@ -62,7 +62,7 @@ public:
     Serial.print(ghn.getPort());
     Serial.println(")");
 
-    if (ghn.notify(("Adhan is connected")) != true)
+    if (ghn.notify(("prayer times notifier, Azan has successfully connected")) != true)
     {
       Serial.println(ghn.getLastError());
       return;
