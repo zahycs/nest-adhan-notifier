@@ -23,5 +23,9 @@ struct Config
     int method; 
     char speakerDisplayName[32];
     char adhan_urls[6][120];
+    // Mawaqit settings
+    char mosqueId[64];
+    char mawaqitUsername[64];
+    char mawaqitPassword[64];
 };
 #endif

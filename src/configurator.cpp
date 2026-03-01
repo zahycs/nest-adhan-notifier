@@ -8,7 +8,7 @@
 #include <ESPAsyncWebServer.h>
 #include <SPIFFS.h>
 
-#define EEPROM_SIZE 1024
+#define EEPROM_SIZE 1536
 #ifndef GIT_VERSION
 #define GIT_VERSION "1.0.0"
 #endif
@@ -29,7 +29,12 @@ private:
     bool playTestAdhan = false;
     const char *git_version = GIT_VERSION_STR;
 public:
-    AsyncWebServer server = AsyncWebServer(80);
+    // AsyncWebServer holds unique_ptr handlers — prevent copying
+    Configurator() = default;
+    Configurator(const Configurator &) = delete;
+    Configurator &operator=(const Configurator &) = delete;
+
+    AsyncWebServer server{80};
     void begin()
     {
         EEPROM.begin(EEPROM_SIZE);
@@ -203,6 +208,10 @@ private:
             strcpy(config.adhan_urls[4], default_mp3Urls[4]);
 
             strcpy(config.adhan_urls[5], default_mp3Urls[5]);
+
+            strcpy(config.mosqueId, "");
+            strcpy(config.mawaqitUsername, "");
+            strcpy(config.mawaqitPassword, "");
         }
         else
         {
@@ -232,6 +241,8 @@ private:
         {
             Serial.println("Adhan URL " + String(i + 1) + ": " + String(config.adhan_urls[i]));
         }
+        Serial.println("Mosque ID: " + String(config.mosqueId));
+        Serial.println("Mawaqit Username: " + String(config.mawaqitUsername));
     }
     static String processor(const String &var, const Configurator *configurator)
     {
@@ -266,6 +277,11 @@ private:
 
         if (var == "TMPL_ADHAN_URL_5")
             return config.adhan_urls[4];
+
+        if (var == "TMPL_MOSQUE_ID")
+            return config.mosqueId;
+        if (var == "TMPL_MAWAQIT_USERNAME")
+            return config.mawaqitUsername;
 
         if (configurator->prayers != nullptr)
         {
@@ -364,6 +380,9 @@ private:
             request->arg("adhan_url_2"),
             request->arg("adhan_url_3"),
             request->arg("adhan_url_4")};
+        String mosqueId = request->arg("mosqueId");
+        String mawaqitUsername = request->arg("mawaqitUsername");
+        String mawaqitPassword = request->arg("mawaqitPassword");
 
         ssid.toCharArray(config.ssid, sizeof(config.ssid));
         password.toCharArray(config.password, sizeof(config.password));
@@ -374,6 +393,12 @@ private:
         for (int i = 0; i < 5; i++)
         {
             adhanUrls[i].toCharArray(config.adhan_urls[i], sizeof(config.adhan_urls[i]));
+        }
+        mosqueId.toCharArray(config.mosqueId, sizeof(config.mosqueId));
+        mawaqitUsername.toCharArray(config.mawaqitUsername, sizeof(config.mawaqitUsername));
+        // Only overwrite password if the user typed something new
+        if (!mawaqitPassword.isEmpty()) {
+            mawaqitPassword.toCharArray(config.mawaqitPassword, sizeof(config.mawaqitPassword));
         }
 
         Serial.println("Saving config...");

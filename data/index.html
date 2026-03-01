@@ -50,6 +50,7 @@
         <div class="tabs-list">
           <a data-content-id="content_1" class="tabs-list-item active" href="javascript:void">Network Configuration</a>
           <a data-content-id="content_2" class="tabs-list-item" href="javascript:void">Adhan Configuration</a>
+          <a data-content-id="content_3" class="tabs-list-item" href="javascript:void">Mawaqit</a>
         </div>
         <div id="content_1" class="tabs-content active">
           <div class="form-body">
@@ -104,6 +105,23 @@
               <label for="adhan_url_4adhan_url_4">Adhan URL 5</label><input type="text" id="adhan_url_4"
                 name="adhan_url_4" value="%TMPL_ADHAN_URL_5%" />
             </div>
+          </div>
+        </div>
+        <div id="content_3" class="tabs-content">
+          <div class="form-body">
+            <div class="form-row">
+              <label for="mosqueId">Mosque ID</label>
+              <input type="text" id="mosqueId" name="mosqueId" value="%TMPL_MOSQUE_ID%" placeholder="e.g. mosque-slug" />
+            </div>
+            <div class="form-row">
+              <label for="mawaqitUsername">Mawaqit Username</label>
+              <input type="text" id="mawaqitUsername" name="mawaqitUsername" value="%TMPL_MAWAQIT_USERNAME%" autocomplete="username" />
+            </div>
+            <div class="form-row">
+              <label for="mawaqitPassword">Mawaqit Password</label>
+              <input type="password" id="mawaqitPassword" name="mawaqitPassword" placeholder="leave blank to keep current" autocomplete="current-password" />
+            </div>
+            <p class="form-hint">Credentials are used to obtain an API access token from mawaqit.net on startup.</p>
           </div>
         </div>
       </div>

@@ -5,7 +5,8 @@
 #include <HTTPClient.h>
 #include <esp8266-google-home-notifier.h>
 #include "adhanPlayer.cpp"
-#include "prayerApiClient.cpp"
+#include "PrayerTimesInterface.h"
+#include "mawaqitPrayerTimes.cpp"
 #include "configurator.cpp"
 #include <time.h>
 #include <EEPROM.h>
@@ -16,7 +17,7 @@ const int NUM_PRAYERS = 5;
 struct tm *prayer_times = new tm[NUM_PRAYERS];
 
 AdhanPlayer adhanPlayer;
-PrayerApiClient prayerClient;
+PrayerTimesInterface* prayerClient = nullptr;
 Configurator configurator;
 Config config;
 
@@ -49,6 +50,12 @@ void setup()
       }
     }
 
+    // Initialize Mawaqit prayer client from saved config
+    prayerClient = new MawaqitPrayerTimes(
+      config.mosqueId,
+      config.mawaqitUsername,
+      config.mawaqitPassword);
+
     // init time
     configTime(0, 0, "pool.ntp.org");
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
@@ -68,8 +75,8 @@ void setup()
 void setPrayerTimes(String city, String country, int method)
 {
   // Call the API and parse the JSON response
-  MethodList *methods_list = prayerClient.getMethods();
-  struct tm *response = prayerClient.getPrayerTimes(city, country, method);
+  MethodList *methods_list = prayerClient->getMethods();
+  struct tm *response = prayerClient->getPrayerTimes(city, country, method);
   if (response != nullptr)
   {
     prayer_times = response;
