@@ -1,0 +1,63 @@
+{
+  "name": "ESP32 PlatformIO Dev",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  // --privileged gives the container access to all host devices, which is
+  // required for USB serial flashing & monitoring (e.g. /dev/ttyUSB0,
+  // /dev/ttyACM0).  If you prefer a narrower scope, replace with:
+  //   "runArgs": ["--device=/dev/ttyUSB0", "--device=/dev/ttyACM0"]
+  "runArgs": [
+    "--privileged",
+    "--network=host"
+  ],
+  // Mount the host /dev tree so USB serial adapters that appear after the
+  // container starts are still accessible.
+  "mounts": [
+    "source=/dev,target=/dev,type=bind,consistency=cached"
+  ],
+  // ── VS Code extensions ────────────────────────────────────────────────────
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // PlatformIO IDE – build, upload, serial monitor, library manager
+        "platformio.platformio-ide",
+        // C / C++ IntelliSense, debugging, code browsing
+        "ms-vscode.cpptools",
+        "ms-vscode.cpptools-extension-pack",
+        // Python – needed for git_rev_macro.py build script
+        "ms-python.python",
+        "ms-python.pylint",
+        // Serial Monitor – standalone serial terminal inside VS Code
+        // Works with ESP32 over USB-UART (/dev/ttyUSB* or /dev/ttyACM*)
+        "ms-vscode.serial-monitor",
+        // General quality-of-life
+        "EditorConfig.EditorConfig",
+        "streetsidesoftware.code-spell-checker"
+      ],
+      "settings": {
+        // Let PlatformIO manage its own Python environment
+        "python.defaultInterpreterPath": "/home/vscode/.platformio/penv/bin/python",
+        // Serial Monitor defaults – adjust baud rate to match your firmware
+        "serialMonitor.defaultBaudRate": 115200,
+        "editor.formatOnSave": true,
+        "C_Cpp.default.compilerPath": "/usr/bin/gcc",
+        "C_Cpp.default.cStandard": "c11",
+        "C_Cpp.default.cppStandard": "c++17"
+      }
+    }
+  },
+  // Ensure PlatformIO CLI is on PATH inside every integrated terminal
+  // ${containerEnv:PATH} is the correct devcontainer syntax to reference the
+  // container's existing PATH; bare ${PATH} is passed as a literal string.
+  "remoteEnv": {
+    "PATH": "/home/vscode/.platformio/penv/bin:${containerEnv:PATH}"
+  },
+  // Run as the non-root vscode user (already in dialout group via Dockerfile)
+  "remoteUser": "vscode",
+  // Post-create: install Python deps used by the build scripts, then
+  // pre-install all PlatformIO libraries declared in platformio.ini so the
+  // first build doesn't trigger library resolution from scratch.
+  "postCreateCommand": "pip3 install --user gitpython 2>/dev/null || true && pio pkg install"
+}

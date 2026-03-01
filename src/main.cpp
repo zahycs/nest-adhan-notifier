@@ -9,7 +9,7 @@
 #include "configurator.cpp"
 #include <time.h>
 #include <EEPROM.h>
-#include <AsyncElegantOTA.h>
+#include <ElegantOTA.h>
 
 // constants and variables
 const int NUM_PRAYERS = 5;
@@ -34,7 +34,7 @@ void setup()
 
     //
     configurator.begin();
-    AsyncElegantOTA.begin(&configurator.server);
+    ElegantOTA.begin(&configurator.server);
     configurator.server.begin();
     static bool configSet = false;
     static Config config;
@@ -98,7 +98,7 @@ void printLocalTime(struct tm *local_time)
   Serial.print(local_time->tm_sec); // print second
   Serial.println();
 }
-void playAdhan(int prayer_index, char *adhan_url, char *notification=NULL)
+void playAdhan(int prayer_index, char *adhan_url, char *notification = NULL)
 {
   try
   {
@@ -143,7 +143,7 @@ void loop()
 
       if (now_hour == prayer_times[i].tm_hour && now_min == prayer_times[i].tm_min)
       {
-        playAdhan(i, config.adhan_urls[i],NULL);
+        playAdhan(i, config.adhan_urls[i], NULL);
       }
     }
     // Check if the user wants to play a test adhan
